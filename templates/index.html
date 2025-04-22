@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mouse Drawing</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            flex-direction: row-reverse; /* 将侧边栏放在右侧 */
+        }
+        
+        #canvas {
+            display: block;
+            height: 100%;
+            flex: 1;
+        }
+        
+        #sidebar {
+            background-color: #333;
+            color: white;
+            width: 300px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            position: relative;
+            flex-shrink: 0; /* 防止侧边栏缩小 */
+        }
+        
+        body.sidebar-collapsed #sidebar {
+            transform: translateX(100%); /* 向右侧折叠 */
+            position: absolute;
+            right: 0; /* 从右侧开始 */
+            top: 0;
+        }
+        
+        #info {
+            margin-bottom: 20px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        #sidebarControls {
+            position: absolute;
+            top: 10px;
+            right: 10px; /* 改为右侧 */
+            display: flex;
+        }
+        
+        #pinButton {
+            cursor: pointer;
+            margin-right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+        }
+        
+        #collapseButton {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+        }
+        
+        #collapseButton .icon {
+            transform: rotate(180deg); /* 反转方向指向右侧 */
+        }
+        
+        #expandButton {
+            position: fixed;
+            top: 10px;
+            right: 10px; /* 改为右侧 */
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 20px;
+            display: none;
+            z-index: 200;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        #expandButton:hover {
+            background-color: #444;
+            transform: scale(1.05);
+        }
+        
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="sidebar">
+            <div id="sidebarControls">
+                <button id="pinButton" title="固定侧边栏"><span class="icon">📌</span></button>
+                <button id="collapseButton" title="折叠侧边栏"><span class="icon">◀</span></button>
+            </div>
+            <div id="info">
+                <div id="fps">FPS: 0</div>
+            </div>
+            <div id="page"></div>
+        </div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <button id="expandButton" title="展开侧边栏"><span class="icon">◀</span></button>
+    
+    <script>
+        var socket = io();
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var fpsDisplay = document.getElementById('fps');
+        var imageWidth = 1024;
+        var imageHeight = 1024;
+        var currentImage = null;
+        var drawing = false;
+        var lastX, lastY;
+        var lastFrameTime = performance.now();
+        var frameCount = 0;
+
+        const sidebar = document.getElementById('sidebar');
+        const expandButton = document.getElementById('expandButton');
+        const collapseButton = document.getElementById('collapseButton');
+        const pinButton = document.getElementById('pinButton');
+        let sidebarPinned = true; // 默认固定侧边栏
+
+        // 处理侧边栏折叠和展开
+        document.getElementById('collapseButton').addEventListener('click', function() {
+            document.body.classList.add('sidebar-collapsed');
+            document.getElementById('expandButton').style.display = 'block';
+            resizeCanvas(true);
+        });
+
+        document.getElementById('expandButton').addEventListener('click', function() {
+            document.body.classList.remove('sidebar-collapsed');
+            document.getElementById('expandButton').style.display = 'none';
+            resizeCanvas(true);
+        });
+
+        document.getElementById('pinButton').addEventListener('click', function() {
+            this.classList.toggle('active');
+            const isPinned = this.classList.contains('active');
+            if (isPinned) {
+                document.getElementById('collapseButton').style.display = 'none';
+            } else {
+                document.getElementById('collapseButton').style.display = 'block';
+            }
+        });
+
+        // 当鼠标移出侧边栏时，如果没有固定，则自动折叠
+        sidebar.addEventListener('mouseleave', function() {
+            const isPinned = document.getElementById('pinButton').classList.contains('active');
+            if (!isPinned) {
+                document.body.classList.add('sidebar-collapsed');
+                document.getElementById('expandButton').style.display = 'block';
+                resizeCanvas(true);
+            }
+        });
+
+        function resizeCanvas(send_to_backend) {
+            canvas.width = document.body.classList.contains('sidebar-collapsed') ? 
+                window.innerWidth : 
+                window.innerWidth - sidebar.offsetWidth;
+            canvas.height = window.innerHeight;
+            var aspectRatio = canvas.width / canvas.height;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (currentImage) {
+                ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+            }
+            // 获取网页的长宽比并发送到后端
+            if (send_to_backend) {
+                socket.emit('set_aspect_ratio', {aspect_ratio: aspectRatio});
+            }
+            socket.emit('send_canvas_size', {canvas_width: canvas.width, canvas_height: canvas.height});
+        }
+
+        window.addEventListener('resize', () => resizeCanvas(true));
+
+        // 页面加载时检查状态
+        window.addEventListener('load', function() {
+            // 默认展开状态
+            document.body.classList.remove('sidebar-collapsed');
+            expandButton.style.display = 'none';
+            resizeCanvas(true);
+        });
+
+        function updatePosition(x, y) {
+            if (lastX != null && lastY != null) {
+                socket.emit('update_mouse_position', {x: x, y: y, last_x: lastX, last_y: lastY})
+            }
+            lastX = x;
+            lastY = y;
+        }
+        
+        canvas.addEventListener('mousedown', function(event) {
+            if (event.button === 0) {
+                socket.emit('on_left_mouse_press'); 
+            } else if (event.button === 2) {
+                socket.emit('on_right_mouse_press');
+            }
+        });
+
+        canvas.addEventListener('mouseup', function(event) {
+            if (event.button === 0) {
+                socket.emit('on_left_mouse_release'); 
+            } else if (event.button === 2) {
+                socket.emit('on_right_mouse_release');
+            }
+        });
+
+        canvas.addEventListener('mouseleave', function(event) {
+            socket.emit('on_left_mouse_release'); 
+            socket.emit('on_right_mouse_release');
+        });
+
+        canvas.addEventListener('mousemove', function(event) {
+            updatePosition(event.clientX, event.clientY);
+        });
+        
+        canvas.addEventListener('wheel', function(event) {
+            event.preventDefault();
+            const delta = event.deltaY; // `deltaY` indicates the wheel movement (positive or negative)
+            socket.emit('on_mouse_wheel', {delta: delta});
+        });
+
+        // Add support for right-click context menu prevention
+        canvas.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+
+        // 添加触摸事件支持
+        canvas.addEventListener('touchstart', function(event) {
+            socket.emit('on_left_mouse_press'); 
+        });
+
+        canvas.addEventListener('touchend', function(event) {
+            socket.emit('on_left_mouse_release'); 
+        });
+
+        canvas.addEventListener('touchcancel', function(event) {
+            socket.emit('on_left_mouse_release'); 
+        });
+
+        canvas.addEventListener('touchmove', function(event) {
+            const touch = event.touches[0];
+            updatePosition(touch.clientX, touch.clientY);
+        });
+
+        // 接收后端的渲染结果
+        socket.on('draw_response', function(data) {
+            var blob = new Blob([data], {type: 'image/jpeg'});
+            var url = URL.createObjectURL(blob);
+            var img = new Image();
+            img.src = url;
+            img.onload = function() {
+                currentImage = img;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+
+                // 更新帧率显示
+                frameCount++;
+                var now = performance.now();
+                var elapsed = now - lastFrameTime;
+                if (elapsed >= 1000) {
+                    var fps = (frameCount / elapsed) * 1000;
+                    fpsDisplay.textContent = `FPS: ${fps.toFixed(1)}`;
+                    frameCount = 0;
+                    lastFrameTime = now;
+                }
+            };
+        });
+        
+        socket.on('connect', function() {
+            console.log('WebSocket connected');  // 调试信息
+            
+            // 初始化侧边栏状态
+            if (pinButton.classList.contains('active')) {
+                collapseButton.style.display = 'none';
+            } else {
+                collapseButton.style.display = 'block';
+            }
+            
+            // 调整画布大小以适应当前侧边栏状态
+            const isSidebarCollapsed = document.body.classList.contains('sidebar-collapsed');
+            resizeCanvas(!isSidebarCollapsed);
+            
+            socket.emit('set_image_size_by_canvas_size', {width: canvas.width, height: canvas.height});
+            socket.emit('request_controls');  // 请求控件
+        });
+
+        socket.on('set_image_size', function(data) {
+            imageWidth = data.width;
+            imageHeight = data.height;
+        });
+
+        socket.on('disconnect', function() {
+            console.log('WebSocket disconnected');  // 调试信息
+        });
+
+        // 动态插入控件
+        socket.on('render_controls', function(data) {
+            
+            console.log("Render_Controls")
+
+            var page = document.getElementById('page');
+            var controls = document.createElement('div');
+            controls.id = 'controls';
+            page.appendChild(controls);
+
+            controls.innerHTML = data.htmls;
+
+            var content = data.contents;
+            for (var i = 0; i < content.length; i++) {
+                (function(contentItem) {
+                    if (contentItem.type === 'button') {
+                        var button_id = contentItem.id;
+                        var button = document.getElementById(button_id);
+                        var button_func = contentItem.id;
+                    
+                        button.addEventListener('click', function() {
+                            socket.emit(button_func, {});
+                        });
+                        socket.on('update_' + button_id, function(data) {
+                            var value = data.text;
+                            button.textContent = value;
+                            socket.emit(button_func, {});
+                        });
+                    }
+                    else if (contentItem.type === 'inputbox') {
+                        var inputbox_id = contentItem.id;
+                        var inputbox = document.getElementById(inputbox_id);
+                        var inputbox_func = contentItem.id;
+                        var checkmark = document.getElementById(inputbox_id + '-checkmark');
+                        
+                        inputbox.value = contentItem.content;
+                    
+                        inputbox.addEventListener('keydown', function(event) {
+                             // 检查按下的键是否是回车键 (Enter)
+                            if (event.key === 'Enter') {
+                                // 捕捉并显示输入的文字
+                                checkmark.style.display = 'inline';
+                                inputbox.blur();
+                                socket.emit(inputbox_func, {content: inputbox.value})
+                            }
+                        });
+                        // 监听输入框内容变化
+                        inputbox.addEventListener('input', function() {
+                            // 当用户修改输入内容时，隐藏打勾符号
+                            checkmark.style.display = 'none';
+                        });
+                        socket.on('update_' + inputbox_id, function(data) {
+                            inputbox.value = data.content;
+                            socket.emit(inputbox_func, {content: inputbox.value});
+                        });
+                    }
+                    else if (contentItem.type === 'slider') {
+                        var slider_id = contentItem.id;
+                        var slider_text = contentItem.text;
+                        var init_value = contentItem.value;
+                        var slider_min = parseFloat(contentItem.min);
+                        var slider_max = parseFloat(contentItem.max);
+                        var slider = document.getElementById(slider_id);
+                        // var sliderValueDisplay = document.getElementById(slider_id + '-value');
+                        var sliderValueInput = document.getElementById(slider_id + '-slider-value-input');
+                        
+                        slider.value = init_value
+                        // sliderValueDisplay.textContent = value;
+                        sliderValueInput.textContent = init_value;
+
+                        var slider_func = contentItem.id;
+                       
+                        slider.addEventListener('input', function() {
+                            var value = slider.value;
+                            sliderValueInput.textContent = value;
+                            sliderValueInput.value = value;
+                            socket.emit(slider_func, {value: value});
+                        });
+                        
+                        sliderValueInput.addEventListener('keydown', function() {
+                            if (event.key === 'Enter') {
+                                // 捕捉并显示输入的文字
+                                var value = sliderValueInput.value;
+                                console.log("input ", value);
+                                if (!isNaN(value)) {
+                                    if (value > slider_max) {
+                                        console.log("over max");
+                                        value = slider_max;
+                                    }
+                                    if (value < slider_min) {
+                                        value = slider_min;
+                                    }
+                                    console.log(value, slider_min, slider_max);
+                                    slider.value = value;
+                                    sliderValueInput.value = value;
+                                    sliderValueInput.textContent = value;
+                                }
+                                sliderValueInput.blur();
+                            }
+                        });
+                        sliderValueInput.addEventListener('input', function() {
+                            // const value = Number(sliderValueInput.value);
+                            const value = sliderValueInput.value;
+                            if (!isNaN(value) && value >= slider_min && value <= slider_max) {
+                                slider.value = value;
+                                sliderValueInput.value = value;
+                                socket.emit(slider_func, {value: value});
+                            }
+                        });
+                        
+                        sliderValueInput.addEventListener('blur', function() {
+                            let value = sliderValueInput.value;
+                            if (isNaN(value) || value < slider_min) {
+                                value = slider_min;
+                            } else if (value > slider_max) {
+                                value = slider_max;
+                            }
+                            sliderValueInput.value = value;
+                            sliderValueInput.textContent = value;
+                            slider.value = value;
+                            socket.emit(slider_func, {value: value});
+                        });
+
+                        socket.on('update_' + slider_id, function(data) {
+                            var value = data.value;
+                            slider.value = value;
+                            sliderValueInput.textContent = value;
+                            socket.emit(slider_func, {value: value});
+                        });
+                    } else if (contentItem.type === 'text') {
+                        var text_id = contentItem.id;
+                        var text = document.getElementById(text_id);
+                        var text_value = contentItem.text;
+
+                        text.textContent = text_value;
+                        socket.on('update_' + text_id, function(data) {
+                            var value = data.text;
+                            text.textContent = value;
+                        });
+
+                    } else if (contentItem.type === 'dropdown') {
+                        var dropdown_id = contentItem.id;
+                        var dropdown = document.getElementById(dropdown_id);
+                        var dropdown_value = contentItem.option
+                        var dropdown_func = contentItem.id;
+
+                        dropdown.value = dropdown_value
+
+                        dropdown.addEventListener('change', function() {
+                            var value = dropdown.value;
+                            socket.emit(dropdown_func, {option: value});
+                        });
+                        
+                        socket.on('update_' + dropdown_id, function(data) {
+                            var option = data.value;
+                            dropdown.value = option;
+                            socket.emit(dropdown_func, {option: option});
+                        });
+                        
+                    } else if (contentItem.type === 'checkbox') {
+                        var checkbox_id = contentItem.id;
+                        var checkbox = document.getElementById(checkbox_id);
+                        var checkbox_func = contentItem.id;
+                        var checkbox_value = contentItem.checked
+
+                        checkbox.checked = checkbox_value === 'true'
+                        
+                        checkbox.addEventListener('change', function() {
+                            var value = checkbox.checked;
+                            socket.emit(checkbox_func, {checked: value})
+                         });
+                        socket.on('update_' + checkbox_id, function(data) {
+                            var checked = data.checked;
+                            checkbox.checked = checked === 'true'
+                            socket.emit(checkbox_func, {checked: checkbox.checked})
+                        });
+                    } else if (contentItem.type == "image") {
+                        var image_id = contentItem.id;
+                        const image = document.getElementById(image_id);
+                        var image_func = contentItem.id;
+
+                        // image.src = contentItem.image;
+                        image.src = 'data:image/jpeg;base64,' + contentItem.image;
+
+                        socket.on('update_' + image_id, function(data) {
+                            var image_data = data.image;
+                            // image.src = image_data;
+                            image.src = 'data:image/jpeg;base64,' + image_data;
+                            
+                            socket.emit(image_func, {image: image_data})
+                        });
+
+                    } else if (contentItem.type === 'accordion') {
+                        var accordion_id = contentItem.id;
+                        const accordion = document.getElementById(accordion_id);
+                        const arrow = document.getElementById(accordion_id + '-arrow');
+                        const nestedControls = document.getElementById(accordion_id + '-nestedControls');
+
+                        var expanded = contentItem.expanded;
+                        if (expanded === 'true') {
+                            if (nestedControls.style.display !== 'block') { 
+                                nestedControls.style.display = 'block';
+                                arrow.classList.remove('right');
+                                arrow.classList.add('down');
+                            }
+                        } else {
+                            if (nestedControls.style.display === 'block') { 
+                                nestedControls.style.display = 'none';
+                                arrow.classList.remove('down');
+                                arrow.classList.add('right');
+                            }
+                        }
+
+                        // 点击标题时展开或收起嵌套控件
+                        accordion.addEventListener('click', function() {
+                            if (nestedControls.style.display === 'none' || nestedControls.style.display === '') {
+                                nestedControls.style.display = 'block';
+                                arrow.classList.remove('right');
+                                arrow.classList.add('down');
+                            } else {
+                                nestedControls.style.display = 'none';
+                                arrow.classList.remove('down');
+                                arrow.classList.add('right');
+                            }
+                            socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
+                        });
+                        socket.on('update_' + accordion_id, function (data) {
+                            var expanded = data.expanded;
+                            if (expanded === 'true') {
+                                nestedControls.style.display = 'block';
+                                arrow.classList.remove('right');
+                                arrow.classList.add('down');
+                            } else {
+                                nestedControls.style.display = 'none';
+                                arrow.classList.remove('down');
+                                arrow.classList.add('right');
+                            }
+                            socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
+                        });
+                    } else if (contentItem.type === 'tab') {
+                        var tab_id = contentItem.id;
+                        const tab = document.getElementById(tab_id);
+                        const active_tab_id = contentItem.active_tab_id;
+                        
+                        // 获取所有标签和页面内容元素
+                        const tabs = document.querySelectorAll('.tab');
+                        const pages = document.querySelectorAll('.tab-content');
+
+                        tabs.forEach(t => t.classList.remove('active'));
+                        pages.forEach(p => p.classList.remove('active'));
+
+                        // 当前点击的 tab 添加 active 类
+                        var t = tabs[active_tab_id];
+                        t.classList.add('active');
+
+                        // 找到对应的页面内容并添加 active 类
+                        const pageId = t.getAttribute('data-page');
+                        document.getElementById(pageId).classList.add('active');
+
+                        // 为每个 tab 添加点击事件
+                        tabs.forEach(tab => {
+                            tab.addEventListener('click', function() {
+                                // 移除所有 tab 和内容的 active 类
+                                tabs.forEach(t => t.classList.remove('active'));
+                                pages.forEach(p => p.classList.remove('active'));
+
+                                // 当前点击的 tab 添加 active 类
+                                this.classList.add('active');
+
+                                // 找到对应的页面内容并添加 active 类
+                                const pageId = this.getAttribute('data-page');
+                                document.getElementById(pageId).classList.add('active');
+                                
+                                var parts = pageId.split('-');
+                                var active_id = parseInt(parts[parts.length - 1]);
+                                socket.emit(tab_id, {active_tab: active_id});
+                            });
+                        });
+                    }
+                })(content[i]);
+                }
+            }
+        );
+        
+        // 阻止默认触摸事件，确保侧边栏可以滚动
+        sidebar.addEventListener('touchstart', function(event) {
+            event.stopPropagation();
+        }, { passive: false });
+
+        sidebar.addEventListener('touchmove', function(event) {
+            event.stopPropagation();
+        }, { passive: false });
+
+        resizeCanvas(true);
+    </script>
+</body>
+</html>
