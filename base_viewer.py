@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import copy
 import json
 import cv2
@@ -17,6 +17,7 @@ from .utils import *
 class Session:
 
     def __init__(self):
+        self._sid = None
 
         self.image_width     = None
         self.image_height    = None
@@ -200,10 +201,6 @@ class Session:
         print("init succeed!")
         
         while True:
-            # if not self.is_connecting:
-                # time.sleep(0.2)
-                # continue
-
             frame_start_time = time.time()
             if self.use_dynamic_resolution:
                 self.adjust_image_size(render_time)
@@ -217,7 +214,6 @@ class Session:
                 current_image_width = self.image_width
 
                 if self.force_fix_aspect_ratio:
-                    
                     scale = max(
                         current_image_height,
                         current_image_width / self.aspect_ratio,
@@ -245,30 +241,15 @@ class Session:
                     if padding_x > 0 or padding_y > 0:
                         image = np.pad(image, ((padding_y, padding_y), (padding_x, padding_x), (0, 0)), 'constant', constant_values=0)
 
+                    _, buf = cv2.imencode('.jpg', image)
+                    img_data = buf.tobytes()
+                    # 使用room参数指定接收者
+                    socketio.emit('draw_response', img_data, room=self._sid)
+
                 else:
                     time.sleep(0.1)
                     render_time = 0
                     continue
-
-            else:
-                continue
-
-            if not isinstance(image, np.ndarray):
-                raise TypeError("Image must be a numpy array")
-            
-            if len(image.shape) != 3 and len(image.shape) != 2:
-                raise ValueError("Image must have 3 dimensions(H, W, 3/4) or 2 dimensions(H, W)")
-            
-            if not (rendered_image_height == current_image_height and rendered_image_width == current_image_width):
-                raise ValueError("Image dimensions must match the image size")
-
-            _, buf = cv2.imencode('.jpg', image)
-            img_data = buf.tobytes()
-            # current_image_hash = hashlib.md5(img_data).hexdigest()
-            # if current_image_hash != self.last_image_hash:
-                # socketio.emit('draw_response', img_data)
-                # self.last_image_hash = current_image_hash
-            socketio.emit('draw_response', img_data)
 
             render_time = time.time() - frame_start_time
             sleep_time = max(0, self.frame_interval - render_time)
@@ -555,30 +536,39 @@ class BaseWebViewer(ABC):
         
         @self._socketio.on('connect')
         def handle_connect():
+            self._connect_num += 1
 
             sid = request.sid
+            
+            # 将客户端加入到以其sid为名的room
+            join_room(sid)
+            
             if shared_session:
                 if self._shared_session is None:
                     self._shared_session = Session()
-                
+                    
                     session = self._shared_session
                     session.controls = self._controls
+                    session._sid = sid
                     
                     threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
             else:
                 session = Session()
+                session._sid = sid
                 session.controls = [control.copy() for control in self._controls]
                 
                 threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
                 
                 self._sessions[sid] = session
                 
-            self._connect_num += 1
 
         @self._socketio.on('disconnect')
         def handle_disconnect():
             sid = request.sid
 
+            # 将客户端从以其sid为名的room中移除
+            leave_room(sid)
+            
             if sid in self._sessions:
                 del self._sessions[sid]
                 
