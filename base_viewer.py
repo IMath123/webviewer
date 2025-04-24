@@ -12,6 +12,7 @@ from typing import Optional, Union, Callable, List, Dict, Tuple
 from abc import ABC, abstractmethod
 from .controls import *
 from .utils import *
+import uuid
 
 
 class Session:
@@ -31,6 +32,7 @@ class Session:
         ):
         self._sid = sid
 
+        print("new", self._sid)
         self.image_width     = width
         self.image_height    = height
         self.canvas_width    = None
@@ -282,7 +284,10 @@ class Session:
                     _, buf = cv2.imencode('.jpg', image)
                     img_data = buf.tobytes()
                     # 使用room参数指定接收者
-                    socketio.emit('draw_response', img_data, room=self._sid)
+                    if self._sid is not None:
+                        socketio.emit('draw_response', img_data, room=self._sid)
+                    else:
+                        socketio.emit('draw_response', img_data)
 
                 else:
                     time.sleep(0.1)
@@ -416,6 +421,9 @@ class BaseWebViewer(ABC):
 
     # Controls
     def add_control(self, name: str, control: BasicControl) -> None:
+        if name is None:
+            name = str(uuid.uuid4())
+
         if not isinstance(name, str):
             raise TypeError('name must be a string')
         
@@ -486,11 +494,11 @@ class BaseWebViewer(ABC):
 
         self.add_control(name, control)
     
-    def add_divider(self, name: str) -> None:
+    def add_divider(self) -> None:
         
         control = Divider()
 
-        self.add_control(name, control)
+        self.add_control(None, control)
         
     def add_checkbox(self,
                      name:       str,
@@ -569,16 +577,21 @@ class BaseWebViewer(ABC):
             sid = request.sid
             
             # 将客户端加入到以其sid为名的room
-            join_room(sid)
-            
+            # join_room(sid)
+
             if shared_session:
                 if self._shared_session is None:
-                    session = self._new_default_session(sid)
+                    session = self._new_default_session(None)
                     self._shared_session = session
                     session._set_controls(self._controls, copy=False)
+                    threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
+                else:
+                    session = self._shared_session
             else:
                 session = self._new_default_session(sid)
                 session._set_controls(self._controls, copy=True)
+                self._sessions[sid] = session
+                threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
 
             htmls = []
             contents = []
@@ -594,20 +607,15 @@ class BaseWebViewer(ABC):
 
             emit('render_controls', {'htmls': htmls, 'contents': contents})
             
-            threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
-            
-            self._sessions[sid] = session
-            
             self.on_connect(session)
+            
 
         @self._socketio.on('disconnect')
         def handle_disconnect():
             sid = request.sid
 
-            # 将客户端从以其sid为名的room中移除
-            leave_room(sid)
-            
             if sid in self._sessions:
+                # leave_room(sid)
                 del self._sessions[sid]
                 
             self._connect_num -= 1

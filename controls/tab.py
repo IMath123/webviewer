@@ -16,6 +16,7 @@ class Tab(BasicControl):
         
         self.pages = OrderedDict()
         self.active_tab = None
+
     
     def copy(self):
         new_control = super().copy()
@@ -30,6 +31,8 @@ class Tab(BasicControl):
         if page_name in self.pages: return
 
         self.pages[page_name] = {"names": [], "controls": []}
+        
+        return self
     
     def add_control(self, name: str, control: BasicControl) -> None:
         if len(self.pages) == 0:
@@ -94,8 +97,8 @@ class Tab(BasicControl):
         for i, title in enumerate(self.pages.keys()):
             actived = "tab-content activate" if i == 0 else "tab-content"
             tab_html += f'<div id="{self._id}-page-{i}" class="{actived}">'
-            for control_name in self.pages[title]["names"]:
-                control = self.pages[title]["controls"][control_name]
+            for control in self.pages[title]["controls"]:
+                # control = self.pages[title]["controls"][control_name]
                 html = control.get_html()
                 tab_html += html
             tab_html += '</div>'
@@ -124,8 +127,8 @@ class Tab(BasicControl):
         super().set_socketio(socketio, sid)
 
         for page_name in self.pages.keys():
-            for control_name in self.pages[page_name]["names"]:
-                control = self.pages[page_name]["controls"][control_name]
+            for control in self.pages[page_name]["controls"]:
+                # control = self.pages[page_name]["controls"][control_name]
                 control.set_socketio(socketio, sid)
 
     def _get_content(self) -> List[Dict]:

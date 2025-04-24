@@ -331,9 +331,6 @@
 
         // 动态插入控件
         socket.on('render_controls', function(data) {
-            
-            console.log("Render_Controls")
-
             var page = document.getElementById('page');
             var controls = document.createElement('div');
             controls.id = 'controls';
