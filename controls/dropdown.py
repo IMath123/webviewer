@@ -40,8 +40,8 @@ class Dropdown(BasicControl):
         '''
         dropdown_html += f'''
 <div style="display: flex; align-items: center; white-space: nowrap">
-  <label for="{self.get_id()}" class="control-text" style="margin-right: 10px;">{self.text}</label>
-  <select id="{self.get_id()}" class="control-dropdown">
+  <label for="{self._id}" class="control-text" style="margin-right: 10px;">{self.text}</label>
+  <select id="{self._id}" class="control-dropdown">
 '''
         for option in self.options:
             dropdown_html += f'<option value="{option}">{option}</option>'
@@ -61,7 +61,7 @@ class Dropdown(BasicControl):
                option:  Optional[str]       = None,
                options: Optional[List[str]] = None,
               ) -> None: 
-
+        
         if text is not None:
             if not isinstance(text, str):
                 raise TypeError("text must be a string")

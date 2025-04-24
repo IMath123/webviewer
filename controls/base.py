@@ -32,11 +32,17 @@ class BasicControl:
         self._callback = callback
         
         self._id = self._type + "_" + random_string(RANDOM_ID_LENGTH)
+        
+    def get_id(self):
+        return self._id
+    
+    def get_control(self, name: str):
+        raise RuntimeError(f"This control ({self._type}) does not have nested controls.")
 
     def copy(self):
         new_control = copy.deepcopy(self)
         new_control._id = self._type + "_" + random_string(RANDOM_ID_LENGTH)
-        
+
         return new_control
      
     @abstractmethod
@@ -57,10 +63,7 @@ class BasicControl:
     def get_callback(self) -> Optional[Callable[[Dict], None]]:
         return self._callback
     
-    def get_id(self) -> str:
-        return self._id
-    
-    def set_socketio(self, socketio: SocketIO) -> None:
+    def set_socketio(self, socketio: SocketIO, sid: str) -> None:
         raw_update_func = copy.copy(self.update)  # for avoiding the hook
         @socketio.on(self._id)
         def handle(data):
@@ -73,13 +76,14 @@ class BasicControl:
                 method(*args, **kwargs)  
                 content = self.get_content() 
                 if content is not None:
-                    socketio.emit("update_" + self.get_id(), content)
+                    socketio.emit("update_" + self._id, content, room=sid)
 
             return wrapper
 
         if hasattr(self, 'update'):
             original_method = getattr(self, 'update')
-            setattr(self, 'update', _wrap_with_hook(original_method))
+            hooked_method = _wrap_with_hook(original_method)
+            setattr(self, 'update', hooked_method)
 
    
     def _get_content(self) -> List[Dict]:

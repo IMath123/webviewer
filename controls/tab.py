@@ -3,6 +3,7 @@ from flask_socketio import SocketIO
 from . import *
 from collections import OrderedDict
 import numpy as np
+import copy
 
 
 class Tab(BasicControl):
@@ -16,17 +17,27 @@ class Tab(BasicControl):
         self.pages = OrderedDict()
         self.active_tab = None
     
-    def add_page(self, page_name:str):
+    def copy(self):
+        new_control = super().copy()
+
+        for page_name in new_control.pages:
+            for i, control in enumerate(new_control.pages[page_name]["controls"]):
+                new_control.pages[page_name]["controls"][i] = control.copy()
+
+        return new_control
+    
+    def add_page(self, page_name: str):
         if page_name in self.pages: return
 
-        self.pages[page_name] = []
+        self.pages[page_name] = {"names": [], "controls": []}
     
-    def add_control(self, control: BasicControl) -> None:
+    def add_control(self, name: str, control: BasicControl) -> None:
         if len(self.pages) == 0:
             raise ValueError("Tab must have at least one page")
 
         last_page_name = next(reversed(self.pages))
-        self.pages[last_page_name].append(control)
+        self.pages[last_page_name]["names"].append(name)
+        self.pages[last_page_name]["controls"].append(control)
         
     def get_html(self) -> str:
         tab_html = '''
@@ -69,12 +80,12 @@ class Tab(BasicControl):
         </style>
 
         '''
-        tab_html += f'<div id={self.get_id()}>'
+        tab_html += f'<div id={self._id}>'
 
         for i, title in enumerate(self.pages.keys()):
             div_type = "tab active" if i == 0 else "tab"
             tab_html += f'''
-                <div class="{div_type}" data-page="{self.get_id()}-page-{i}">{title}</div>
+                <div class="{div_type}" data-page="{self._id}-page-{i}">{title}</div>
 
             '''
         tab_html += '</div>\n'
@@ -82,17 +93,14 @@ class Tab(BasicControl):
         tab_html += '<div id="pages">\n'
         for i, title in enumerate(self.pages.keys()):
             actived = "tab-content activate" if i == 0 else "tab-content"
-            tab_html += f'<div id="{self.get_id()}-page-{i}" class="{actived}">'
-            for control in self.pages[title]:
+            tab_html += f'<div id="{self._id}-page-{i}" class="{actived}">'
+            for control_name in self.pages[title]["names"]:
+                control = self.pages[title]["controls"][control_name]
                 html = control.get_html()
                 tab_html += html
             tab_html += '</div>'
             
         tab_html += '</div>'
-        
-        tmp = open("html.txt", "w")
-        tmp.write(tab_html)
-        tmp.close()
         
         return tab_html
     
@@ -112,12 +120,13 @@ class Tab(BasicControl):
             else:
                 self.active_tab = active_tab
         
-    def set_socketio(self, socketio: SocketIO) -> None:
-        super().set_socketio(socketio)
+    def set_socketio(self, socketio: SocketIO, sid: str) -> None:
+        super().set_socketio(socketio, sid)
 
         for page_name in self.pages.keys():
-            for control in self.pages[page_name]:
-                control.set_socketio(socketio)
+            for control_name in self.pages[page_name]["names"]:
+                control = self.pages[page_name]["controls"][control_name]
+                control.set_socketio(socketio, sid)
 
     def _get_content(self) -> List[Dict]:
         if len(self.pages) == 0:
@@ -136,24 +145,26 @@ class Tab(BasicControl):
         
         contents = []
         for page_name in self.pages:
-            for control in self.pages[page_name]:
+            for control in self.pages[page_name]["controls"]:
                 for content in control._get_content():
                     contents.append(content)
         
         return [basic_content, *contents]
     
     def add_button(self, 
+                   name:      str,
                    text:      str,
                    callback:  Callable[[dict], None],
                    ) -> None:
         
         control = Button(text, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
     def add_slider(self,
+                   name:       str,
                    text:       str,
                    callback:   Callable[[dict], None],
                    init_value: Union[int, float],
@@ -166,22 +177,23 @@ class Tab(BasicControl):
             text, callback, init_value, min, max, step
         )
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
 
     def add_text(self, 
+                 name: str,
                  text: str,
                  ) -> None:
         
         control = Text(text)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
-        
+        return self
 
     def add_dropdown(self,
+                     name:        str,
                      text:        str,
                      init_option: str,
                      options:     List[str],
@@ -190,19 +202,20 @@ class Tab(BasicControl):
         
         control = Dropdown(text, init_option, options, callback)
 
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
-    def add_divider(self) -> None:
-        
+    def add_divider(self, name: str) -> None:
+
         control = Divider()
 
-        self.add_control(control)
-
-        return control
+        self.add_control(name, control)
+        
+        return self
         
     def add_checkbox(self,
+                     name:       str,
                      text:       str,
                      init_value: bool,
                      callback:   Callable[[dict], None],
@@ -210,28 +223,30 @@ class Tab(BasicControl):
 
         control = Checkbox(text, init_value, callback)
 
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
     def add_accordion(self,
+                      name:     str,
                       text:     str,
                       expanded: bool = False,
                      ) -> None:
         control = Accordion(text, expanded)
 
-        self.add_control(control)
-
-        return control
+        self.add_control(name, control)
+        
+        return self
     
-    def add_tab(self):
+    def add_tab(self, name: str):
         control = Tab()
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
 
     def add_inputbox(self,
+                     name:     str,
                      label:    str,
                      content:  str,
                      desc:     str,
@@ -239,16 +254,17 @@ class Tab(BasicControl):
                      ):
         control = Inputbox(label, content, desc, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
 
     def add_image(self,
+                  name:     str,
                   image:    np.ndarray,
                   callback: Callable[[dict], None] = None):
 
         control = Image(image, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self

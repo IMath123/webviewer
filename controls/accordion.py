@@ -2,6 +2,7 @@ from typing import Any, Callable, Optional, Union, Dict, List
 from flask_socketio import SocketIO
 from . import *
 import numpy as np
+import copy
 
 
 class Accordion(BasicControl):
@@ -15,12 +16,26 @@ class Accordion(BasicControl):
 
         super().__init__(self.TYPE, None)
         
-        self.text            = text
-        self.expanded        = expanded
-        self.nested_controls = []
+        self.text     = text
+        self.expanded = expanded
+
+        self.nested_controls_names = []
+        self.nested_controls = {}
     
-    def add_control(self, control: BasicControl) -> None:
-        self.nested_controls.append(control)
+    def copy(self):
+        new_control = super().copy()
+
+        for control_name in new_control.nested_controls_names:
+            new_control.nested_controls[control_name] = new_control.nested_controls[control_name].copy()
+
+        return new_control
+    
+    def add_control(self, name: str, control: BasicControl) -> None:
+        self.nested_controls_names.append(name)
+        self.nested_controls[name] = control
+    
+    def get_control(self, name: str) -> BasicControl:
+        return self.nested_controls[name]
         
     def get_html(self) -> str:
         accordion_html = '''
@@ -60,18 +75,19 @@ class Accordion(BasicControl):
         '''
 
         accordion_html += f'''
-            <div id={self.get_id()} class="accordion">
-                <span id="{self.get_id()}-arrow" class="arrow right">▶</span>
+            <div id={self._id} class="accordion">
+                <span id="{self._id}-arrow" class="arrow right">▶</span>
                 {self.text}
             </div>
 
         '''
         
         accordion_html += f'''
-            <div id="{self.get_id()}-nestedControls" class="nested-controls">
+            <div id="{self._id}-nestedControls" class="nested-controls">
         '''
         
-        for control in self.nested_controls:
+        for control_name in self.nested_controls_names:
+            control = self.nested_controls[control_name]
             html = control.get_html()
             accordion_html += html
 
@@ -103,11 +119,12 @@ class Accordion(BasicControl):
             self.expanded = expanded
 
 
-    def set_socketio(self, socketio: SocketIO) -> None:
-        super().set_socketio(socketio)
+    def set_socketio(self, socketio: SocketIO, sid: str) -> None:
+        super().set_socketio(socketio, sid)
 
-        for control in self.nested_controls:
-            control.set_socketio(socketio)
+        for control_name in self.nested_controls_names:
+            control = self.nested_controls[control_name]
+            control.set_socketio(socketio, sid)
 
     def _get_content(self) -> List[Dict]:
         basic_content = {
@@ -118,24 +135,27 @@ class Accordion(BasicControl):
         }
         
         contents = []
-        for control in self.nested_controls:
+        for control_name in self.nested_controls_names:
+            control = self.nested_controls[control_name]
             for content in control._get_content():
                 contents.append(content)
         
         return [basic_content, *contents]
     
     def add_button(self, 
+                   name:      str,
                    text:      str,
                    callback:  Callable[[dict], None],
                    ) -> None:
         
         control = Button(text, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
     def add_slider(self,
+                   name:       str,
                    text:       str,
                    callback:   Callable[[dict], None],
                    init_value: Union[int, float],
@@ -148,22 +168,24 @@ class Accordion(BasicControl):
             text, callback, init_value, min, max, step
         )
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
 
     def add_text(self, 
+                 name: str,
                  text: str,
                  ) -> None:
         
         control = Text(text)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
         
 
     def add_dropdown(self,
+                     name:        str,
                      text:        str,
                      init_option: str,
                      options:     List[str],
@@ -172,19 +194,20 @@ class Accordion(BasicControl):
         
         control = Dropdown(text, init_option, options, callback)
 
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
-    def add_divider(self) -> None:
+    def add_divider(self, name: str) -> None:
         
         control = Divider()
 
-        self.add_control(control)
-
-        return control
+        self.add_control(name, control)
+        
+        return self
         
     def add_checkbox(self,
+                     name:       str,
                      text:       str,
                      init_value: bool,
                      callback:   Callable[[dict], None],
@@ -192,28 +215,30 @@ class Accordion(BasicControl):
 
         control = Checkbox(text, init_value, callback)
 
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
     def add_accordion(self,
+                      name:     str,
                       text:     str,
                       expanded: bool = False,
                      ) -> None:
         control = Accordion(text, expanded)
 
-        self.add_control(control)
+        self.add_control(name, control)
+        
+        return self
 
-        return control
-    
-    def add_tab(self):
+    def add_tab(self, name: str):
         control = Tab()
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
     
     def add_inputbox(self,
+                     name:     str,
                      label:    str,
                      content:  str,
                      desc:     str,
@@ -221,16 +246,17 @@ class Accordion(BasicControl):
                      ):
         control = Inputbox(label, content, desc, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self
 
     def add_image(self,
+                  name:     str,
                   image:    np.ndarray,
                   callback: Callable[[dict], None] = None):
 
         control = Image(image, callback)
         
-        self.add_control(control)
+        self.add_control(name, control)
         
-        return control
+        return self

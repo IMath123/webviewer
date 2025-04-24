@@ -22,7 +22,7 @@ class Text(BasicControl):
         }
         </style>
         '''
-        text_html += f'<div id="{self.get_id()}" class="control-text">{self.text}</div>'
+        text_html += f'<div id="{self._id}" class="control-text">{self.text}</div>'
         
         return text_html
     

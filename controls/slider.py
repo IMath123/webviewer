@@ -138,8 +138,8 @@ class Slider(BasicControl):
         <div class="slider-container">
             <div class="slider-header">
                 <span>{self.text}</span>
-                <input type="range" min="{self.min}" max="{self.max}" step="{self.step}" value="{self.value}" class="slider" id="{self.get_id()}">
-                <input type="text" id="{self.get_id()}-slider-value-input" class="slider-input" value="{self.value}">
+                <input type="range" min="{self.min}" max="{self.max}" step="{self.step}" value="{self.value}" class="slider" id="{self._id}">
+                <input type="text" id="{self._id}-slider-value-input" class="slider-input" value="{self.value}">
             </div>
         </div> 
 

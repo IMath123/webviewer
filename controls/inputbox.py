@@ -66,8 +66,8 @@ class Inputbox(BasicControl):
         inputbox_html += f'''
         <div class="input-container">
             <div>{self.label}</div>
-            <input type="text" id="{self.get_id()}" placeholder="{self.desc}">
-            <span id="{self.get_id()}-checkmark" class="checkmark">&#10003;</span>
+            <input type="text" id="{self._id}" placeholder="{self.desc}">
+            <span id="{self._id}-checkmark" class="checkmark">&#10003;</span>
         </div>
         '''
         

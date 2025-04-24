@@ -20,8 +20,8 @@ class Checkbox(BasicControl):
     def get_html(self) -> str:
         checkbox_html = f'''
 <div style="display: flex; align-items: baseline;">
-  <input type="checkbox" id="{self.get_id()}" class="control-checkbox" style="transform: scale(1.1); vertical-align: baseline;" {'checked' if self.checked else ''}>
-  <label for="{self.get_id()}" class="control-text" style="font-size: 1.1em; margin-left: 10px; vertical-align: baseline;">{self.text}</label>
+  <input type="checkbox" id="{self._id}" class="control-checkbox" style="transform: scale(1.1); vertical-align: baseline;" {'checked' if self.checked else ''}>
+  <label for="{self._id}" class="control-text" style="font-size: 1.1em; margin-left: 10px; vertical-align: baseline;">{self.text}</label>
 </div>
 '''
         return checkbox_html

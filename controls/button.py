@@ -34,7 +34,7 @@ class Button(BasicControl):
         </style>
         '''
         button_html += f'''
-        <button id="{self.get_id()}" class="control-button">{self.text}</button>
+        <button id="{self._id}" class="control-button">{self.text}</button>
         '''
         
         return button_html

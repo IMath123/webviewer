@@ -49,7 +49,7 @@ class Image(BasicControl):
         </style>
         '''
         image_html += f'''
-        <img class="img-control" id="{self.get_id()}" src="" width="1" height="1">
+        <img class="img-control" id="{self._id}" src="" width="1" height="1">
         '''
         
         return image_html
