@@ -123,7 +123,7 @@
     <div class="container">
         <div id="sidebar">
             <div id="sidebarControls">
-                <button id="pinButton" title="固定侧边栏"><span class="icon">📌</span></button>
+                <button id="pinButton" class="active" title="固定侧边栏"><span class="icon">📌</span></button>
                 <button id="collapseButton" title="折叠侧边栏"><span class="icon">◀</span></button>
             </div>
             <div id="info">
@@ -170,10 +170,13 @@
         document.getElementById('pinButton').addEventListener('click', function() {
             this.classList.toggle('active');
             const isPinned = this.classList.contains('active');
+            // 切换图标
             if (isPinned) {
-                document.getElementById('collapseButton').style.display = 'none';
+                this.querySelector('.icon').textContent = '📍'; // 固定
+                collapseButton.style.display = 'none';
             } else {
-                document.getElementById('collapseButton').style.display = 'block';
+                this.querySelector('.icon').textContent = '📌'; // 非固定
+                collapseButton.style.display = 'block';
             }
         });
 
@@ -214,6 +217,14 @@
             document.body.classList.remove('sidebar-collapsed');
             expandButton.style.display = 'none';
             resizeCanvas(true);
+            // pinButton 默认active时，隐藏collapseButton，并同步图标
+            if (pinButton.classList.contains('active')) {
+                pinButton.querySelector('.icon').textContent = '📍';
+                collapseButton.style.display = 'none';
+            } else {
+                pinButton.querySelector('.icon').textContent = '📌';
+                collapseButton.style.display = 'block';
+            }
         });
 
         function updatePosition(x, y) {
