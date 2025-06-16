@@ -84,6 +84,7 @@ class BasicControl:
             original_method = getattr(self, 'update')
             hooked_method = _wrap_with_hook(original_method)
             setattr(self, 'update', hooked_method)
+            setattr(self, 'update_without_callback', original_method)
 
    
     def _get_content(self) -> List[Dict]:

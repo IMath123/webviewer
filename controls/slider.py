@@ -23,6 +23,8 @@ class Slider(BasicControl):
         self.max   = max
         self.step  = step
         
+        self.dtype = float if isinstance(self.value, float) or isinstance(self.min, float) or isinstance(self.max, float) or isinstance(self.step, float) else int
+        
     # def get_html(self) -> str:
     #     slider_html = '''
     #     <style>
@@ -155,38 +157,47 @@ class Slider(BasicControl):
     def get_content(self) -> Optional[Dict]:
         return {
             "text":  self.text,
-            "value": str(self.value),
+            # "value": str(self.value),
+            "value": self.value,
             "min":   self.min,
             "max":   self.max,
             "step":  self.step
         }
 
     def update(self,
+               text : Optional[str]                    = None,
                value: Optional[Union[str, int, float]] = None,
                min  : Optional[Union[int, float]]      = None,
                max  : Optional[Union[int, float]]      = None,
                step : Optional[Union[int, float]]      = None,
                ) -> None:
+
+        if text is not None:
+            if not isinstance(text, str):
+                raise TypeError("text must be a str.")
+            
+            self.text = text
+
         if value is not None:
             if not isinstance(value, (str, int, float)):
                 raise TypeError("value must be a str or an integer or a float.")
             
-            self.value = value
+            self.value = self.dtype(value)
         
         if min is not None:
             if not isinstance(min, (int, float)):
                 raise TypeError("min must be an integer or a float.")
 
-            self.min = min
+            self.min = self.dtype(min)
 
         if max is not None:
             if not isinstance(max, (int, float)):
                 raise TypeError("max must be an integer or a float.")
             
-            self.max = max
+            self.max = self.dtype(max)
 
         if step is not None:
             if not isinstance(step, (int, float)):
                 raise TypeError("step value must be an integer or a float.")
             
-            self.step = step
+            self.step = self.dtype(step)
