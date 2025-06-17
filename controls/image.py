@@ -39,17 +39,10 @@ class Image(BasicControl):
             self.image = None
         
     def get_html(self) -> str:
-        image_html = '''
-        <style>
-        .img-control {
-            width: 100%;
-            height: auto;
-            margin-bottom: 20px;
-        }
-        </style>
-        '''
-        image_html += f'''
-        <img class="img-control" id="{self._id}" src="" width="1" height="1">
+        image_html = f'''
+        <div class="control-group">
+            <img class="control-image" id="{self._id}" src="" alt="Control Image">
+        </div>
         '''
         
         return image_html

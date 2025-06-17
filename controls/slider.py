@@ -46,125 +46,16 @@ class Slider(BasicControl):
     #     return slider_html
     
     def get_html(self) -> str:
-        slider_html = '''
-        <style>
-        /* 滑块容器样式 */
-        .slider-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* 第一行：标题和当前值 */
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 12px;
-            align-items: center;
-        }
-
-        .slider-header span {
-            font-weight: 500;
-            color: #2d3748;
-            font-size: 14px;
-        }
-
-        /* 当前值输入框 */
-        .slider-input {
-            max-width: 50px;
-            min-width: 30px;
-            text-align: center;
-            font-size: 14px;
-            padding: 6px 8px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            outline: none;
-            transition: all 0.3s ease;
-            background: white;
-            color: #2d3748;
-            font-weight: 500;
-        }
-
-        .slider-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        /* 滑块样式 */
-        .slider {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 8px;
-            background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e0 100%);
-            outline: none;
-            opacity: 1;
-            transition: all 0.3s ease;
-            border-radius: 4px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .slider:hover {
-            background: linear-gradient(90deg, #cbd5e0 0%, #a0aec0 100%);
-        }
-
-        /* 滑块的圆形拖动按钮 */
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s ease;
-            border: 2px solid white;
-        }
-
-        .slider::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
-        }
-
-        .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s ease;
-            border: 2px solid white;
-        }
-
-        .slider::-moz-range-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
-        }
-        </style>
-
-        '''
-        
-        slider_html += f'''
-
-        <div class="slider-container">
-            <div class="slider-header">
-                <span>{self.text}</span>
+        slider_html = f'''
+        <div class="control-group">
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span class="control-label">{self.text}</span>
+                    <input type="text" id="{self._id}-slider-value-input" class="slider-input" value="{self.value}">
+                </div>
                 <input type="range" min="{self.min}" max="{self.max}" step="{self.step}" value="{self.value}" class="slider" id="{self._id}">
-                <input type="text" id="{self._id}-slider-value-input" class="slider-input" value="{self.value}">
             </div>
-        </div> 
-
+        </div>
         '''
         
         return slider_html

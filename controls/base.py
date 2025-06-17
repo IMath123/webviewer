@@ -69,7 +69,7 @@ class BasicControl:
         def handle(data):
             raw_update_func(**data)
             if self._callback is not None:
-                self._callback(self)
+                self._callback(data)
         
         def _wrap_with_hook(method):
             def wrapper(*args, **kwargs):

@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebViewer - 现代化图像查看器</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>WebViewer</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,8 +14,9 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
         }
         
         .container {
@@ -29,31 +29,44 @@
         
         #canvas {
             display: block;
-            width: 100%;
             height: 100%;
             flex: 1;
-            border-radius: 0;
-            margin: 0;
-            box-shadow: none;
-            background: #fff;
+            background: #0f0f0f;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #sidebar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            color: #2d3748;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            color: #e0e0e0;
             width: 320px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            padding: 16px;
+            padding: 0;
             box-sizing: border-box;
             overflow-y: auto;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             flex-shrink: 0;
-            border-radius: 0;
-            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            border-left: 1px solid #404040;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #sidebar::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+        
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 3px;
+        }
+        
+        #sidebar::-webkit-scrollbar-thumb:hover {
+            background: #666;
         }
         
         body.sidebar-collapsed #sidebar {
@@ -64,56 +77,65 @@
         }
         
         #info {
-            margin-bottom: 16px;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: #252525;
+            padding: 15px 20px;
+            border-bottom: 1px solid #404040;
+            margin-bottom: 12px;
         }
         
         #fps {
-            font-weight: 600;
             font-size: 14px;
-            text-align: center;
+            font-weight: 500;
+            color: #00d4aa;
+            text-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
         }
         
         .page {
             display: none;
+            padding: 20px;
         }
         
         .page.active {
             display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         #sidebarControls {
             position: absolute;
-            top: 16px;
-            right: 16px;
+            top: 15px;
+            right: 15px;
             display: flex;
             gap: 8px;
+            z-index: 10;
         }
         
         #pinButton, #collapseButton {
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: #2d3748;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
             font-size: 16px;
             padding: 8px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
+            border-radius: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             backdrop-filter: blur(10px);
         }
         
         #pinButton:hover, #collapseButton:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
         
         #pinButton.active {
-            background: #667eea;
-            color: white;
+            background: rgba(0, 212, 170, 0.2);
+            border-color: #00d4aa;
+            color: #00d4aa;
         }
         
         #collapseButton .icon {
@@ -122,24 +144,25 @@
         
         #expandButton {
             position: fixed;
-            top: 16px;
-            right: 16px;
+            top: 15px;
+            right: 15px;
             cursor: pointer;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 16px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            padding: 12px;
             font-size: 18px;
             display: none;
             z-index: 200;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #expandButton:hover {
+            background: linear-gradient(135deg, #353535 0%, #262626 100%);
             transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
         }
         
         .icon {
@@ -150,23 +173,331 @@
             justify-content: center;
         }
         
-        /* 滚动条美化 */
-        #sidebar::-webkit-scrollbar {
-            width: 6px;
+        /* 控件通用样式 */
+        .control-group {
+            margin: 0 12px 8px 12px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        #sidebar::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.05);
-            border-radius: 3px;
+        .control-group:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
         }
         
-        #sidebar::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.3);
-            border-radius: 3px;
+        .control-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #b0b0b0;
+            margin-bottom: 4px;
+            display: block;
         }
         
-        #sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(102, 126, 234, 0.5);
+        /* 按钮样式 */
+        .control-button {
+            background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            text-align: center;
+        }
+        
+        .control-button:hover {
+            background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+            border-color: #666;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 滑块样式 */
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .slider-input {
+            width: 50px;
+            text-align: center;
+            font-size: 12px;
+            padding: 4px 6px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .slider-input:focus {
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #404040;
+            outline: none;
+            border-radius: 2px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .slider:hover {
+            background: #505050;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.6);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.4);
+        }
+        
+        /* 文本样式 */
+        .control-text {
+            font-size: 13px;
+            color: #e0e0e0;
+            padding: 4px 0;
+            line-height: 1.3;
+        }
+        
+        /* 下拉框样式 */
+        .control-dropdown {
+            width: 100%;
+            padding: 6px 10px;
+            background: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+        
+        .control-dropdown:hover {
+            border-color: #666;
+            background: #323232;
+        }
+        
+        .control-dropdown:focus {
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+        
+        /* 复选框样式 */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 2px 0;
+        }
+        
+        .control-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #00d4aa;
+            cursor: pointer;
+        }
+        
+        /* 输入框样式 */
+        .inputbox-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .control-inputbox {
+            width: 100%;
+            padding: 6px 10px;
+            background: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+        
+        .control-inputbox:focus {
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+        
+        .inputbox-desc {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .inputbox-checkmark {
+            color: #00d4aa;
+            font-size: 14px;
+            display: none;
+            margin-left: 6px;
+        }
+        
+        /* 分割线样式 */
+        .control-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #404040 50%, transparent 100%);
+            margin: 12px 0;
+            border: none;
+        }
+        
+        /* 手风琴样式 */
+        .accordion-header {
+            background: linear-gradient(135deg, #353535 0%, #2a2a2a 100%);
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 4px;
+        }
+        
+        .accordion-header:hover {
+            background: linear-gradient(135deg, #404040 0%, #353535 100%);
+            border-color: #666;
+        }
+        
+        .accordion-arrow {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #00d4aa;
+        }
+        
+        .accordion-arrow.down {
+            transform: rotate(90deg);
+        }
+        
+        .accordion-content {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+        
+        /* 标签页样式 */
+        .tab-container {
+            border: 1px solid #555;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .tab-header {
+            display: flex;
+            background: #2a2a2a;
+            border-bottom: 1px solid #555;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border: none;
+            color: #b0b0b0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid #555;
+        }
+        
+        .tab:last-child {
+            border-right: none;
+        }
+        
+        .tab:hover {
+            background: #353535;
+            color: #e0e0e0;
+        }
+        
+        .tab.active {
+            background: #00d4aa;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 12px;
+            background: #252525;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 图片样式 */
+        .control-image {
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid #555;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .control-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -204,7 +535,7 @@
         const expandButton = document.getElementById('expandButton');
         const collapseButton = document.getElementById('collapseButton');
         const pinButton = document.getElementById('pinButton');
-        let sidebarPinned = true; // 默认固定侧边栏
+        let sidebarPinned = true;
 
         // 处理侧边栏折叠和展开
         document.getElementById('collapseButton').addEventListener('click', function() {
@@ -222,17 +553,15 @@
         document.getElementById('pinButton').addEventListener('click', function() {
             this.classList.toggle('active');
             const isPinned = this.classList.contains('active');
-            // 切换图标
             if (isPinned) {
-                this.querySelector('.icon').textContent = '📍'; // 固定
+                this.querySelector('.icon').textContent = '📍';
                 collapseButton.style.display = 'none';
             } else {
-                this.querySelector('.icon').textContent = '📌'; // 非固定
+                this.querySelector('.icon').textContent = '📌';
                 collapseButton.style.display = 'block';
             }
         });
 
-        // 当鼠标移出侧边栏时，如果没有固定，则自动折叠
         sidebar.addEventListener('mouseleave', function() {
             const isPinned = document.getElementById('pinButton').classList.contains('active');
             if (!isPinned) {
@@ -247,14 +576,12 @@
                 window.innerWidth : 
                 window.innerWidth - sidebar.offsetWidth;
             canvas.height = window.innerHeight;
-            // var aspectRatio = canvas.width / canvas.height;
             var aspectRatio = canvas.height / canvas.width;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (currentImage) {
                 ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
             }
-            // 获取网页的长宽比并发送到后端
             if (send_to_backend) {
                 socket.emit('set_aspect_ratio', {aspect_ratio: aspectRatio});
             }
@@ -263,13 +590,10 @@
 
         window.addEventListener('resize', () => resizeCanvas(true));
 
-        // 页面加载时检查状态
         window.addEventListener('load', function() {
-            // 默认展开状态
             document.body.classList.remove('sidebar-collapsed');
             expandButton.style.display = 'none';
             resizeCanvas(true);
-            // pinButton 默认active时，隐藏collapseButton，并同步图标
             if (pinButton.classList.contains('active')) {
                 pinButton.querySelector('.icon').textContent = '📍';
                 collapseButton.style.display = 'none';
@@ -314,16 +638,14 @@
         
         canvas.addEventListener('wheel', function(event) {
             event.preventDefault();
-            const delta = event.deltaY; // `deltaY` indicates the wheel movement (positive or negative)
+            const delta = event.deltaY;
             socket.emit('on_mouse_wheel', {delta: delta});
         });
 
-        // Add support for right-click context menu prevention
         canvas.addEventListener('contextmenu', function(event) {
             event.preventDefault();
         });
 
-        // 添加触摸事件支持
         canvas.addEventListener('touchstart', function(event) {
             socket.emit('on_left_mouse_press'); 
         });
@@ -341,7 +663,6 @@
             updatePosition(touch.clientX, touch.clientY);
         });
 
-        // 接收后端的渲染结果
         socket.on('draw_response', function(data) {
             var blob = new Blob([data], {type: 'image/jpeg'});
             var url = URL.createObjectURL(blob);
@@ -353,7 +674,6 @@
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 URL.revokeObjectURL(url);
 
-                // 更新帧率显示
                 frameCount++;
                 var now = performance.now();
                 var elapsed = now - lastFrameTime;
@@ -367,16 +687,14 @@
         });
         
         socket.on('connect', function() {
-            console.log('WebSocket connected');  // 调试信息
+            console.log('WebSocket connected');
             
-            // 初始化侧边栏状态
             if (pinButton.classList.contains('active')) {
                 collapseButton.style.display = 'none';
             } else {
                 collapseButton.style.display = 'block';
             }
             
-            // 调整画布大小以适应当前侧边栏状态
             const isSidebarCollapsed = document.body.classList.contains('sidebar-collapsed');
             resizeCanvas(!isSidebarCollapsed);
             
@@ -389,10 +707,9 @@
         });
 
         socket.on('disconnect', function() {
-            console.log('WebSocket disconnected');  // 调试信息
+            console.log('WebSocket disconnected');
         });
 
-        // 动态插入控件
         socket.on('render_controls', function(data) {
             var page = document.getElementById('page');
             var controls = document.createElement('div');
@@ -427,17 +744,13 @@
                         inputbox.value = contentItem.content;
                     
                         inputbox.addEventListener('keydown', function(event) {
-                             // 检查按下的键是否是回车键 (Enter)
                             if (event.key === 'Enter') {
-                                // 捕捉并显示输入的文字
                                 checkmark.style.display = 'inline';
                                 inputbox.blur();
                                 socket.emit(inputbox_func, {content: inputbox.value})
                             }
                         });
-                        // 监听输入框内容变化
                         inputbox.addEventListener('input', function() {
-                            // 当用户修改输入内容时，隐藏打勾符号
                             checkmark.style.display = 'none';
                         });
                         socket.on('update_' + inputbox_id, function(data) {
@@ -452,11 +765,9 @@
                         var slider_min = parseFloat(contentItem.min);
                         var slider_max = parseFloat(contentItem.max);
                         var slider = document.getElementById(slider_id);
-                        // var sliderValueDisplay = document.getElementById(slider_id + '-value');
                         var sliderValueInput = document.getElementById(slider_id + '-slider-value-input');
                         
                         slider.value = init_value
-                        // sliderValueDisplay.textContent = value;
                         sliderValueInput.textContent = init_value;
 
                         var slider_func = contentItem.id;
@@ -470,7 +781,6 @@
                         
                         sliderValueInput.addEventListener('keydown', function() {
                             if (event.key === 'Enter') {
-                                // 捕捉并显示输入的文字
                                 var value = sliderValueInput.value;
                                 console.log("input ", value);
                                 if (!isNaN(value)) {
@@ -490,7 +800,6 @@
                             }
                         });
                         sliderValueInput.addEventListener('input', function() {
-                            // const value = Number(sliderValueInput.value);
                             const value = sliderValueInput.value;
                             if (!isNaN(value) && value >= slider_min && value <= slider_max) {
                                 slider.value = value;
@@ -570,12 +879,10 @@
                         const image = document.getElementById(image_id);
                         var image_func = contentItem.id;
 
-                        // image.src = contentItem.image;
                         image.src = 'data:image/jpeg;base64,' + contentItem.image;
 
                         socket.on('update_' + image_id, function(data) {
                             var image_data = data.image;
-                            // image.src = image_data;
                             image.src = 'data:image/jpeg;base64,' + image_data;
                             
                             socket.emit(image_func, {image: image_data})
@@ -589,76 +896,68 @@
 
                         var expanded = contentItem.expanded;
                         if (expanded === 'true') {
-                            if (!nestedControls.classList.contains('expanded')) { 
-                                nestedControls.classList.add('expanded');
+                            if (nestedControls.style.display !== 'block') { 
+                                nestedControls.style.display = 'block';
                                 arrow.classList.remove('right');
                                 arrow.classList.add('down');
                             }
                         } else {
-                            if (nestedControls.classList.contains('expanded')) { 
-                                nestedControls.classList.remove('expanded');
+                            if (nestedControls.style.display === 'block') { 
+                                nestedControls.style.display = 'none';
                                 arrow.classList.remove('down');
                                 arrow.classList.add('right');
                             }
                         }
 
-                        // 点击标题时展开或收起嵌套控件
                         accordion.addEventListener('click', function() {
-                            if (!nestedControls.classList.contains('expanded')) {
-                                nestedControls.classList.add('expanded');
+                            if (nestedControls.style.display === 'none' || nestedControls.style.display === '') {
+                                nestedControls.style.display = 'block';
                                 arrow.classList.remove('right');
                                 arrow.classList.add('down');
                             } else {
-                                nestedControls.classList.remove('expanded');
+                                nestedControls.style.display = 'none';
                                 arrow.classList.remove('down');
                                 arrow.classList.add('right');
                             }
-                            socket.emit(accordion_id, {expanded: nestedControls.classList.contains('expanded')});
+                            socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
                         });
                         socket.on('update_' + accordion_id, function (data) {
                             var expanded = data.expanded;
                             if (expanded === 'true') {
-                                nestedControls.classList.add('expanded');
+                                nestedControls.style.display = 'block';
                                 arrow.classList.remove('right');
                                 arrow.classList.add('down');
                             } else {
-                                nestedControls.classList.remove('expanded');
+                                nestedControls.style.display = 'none';
                                 arrow.classList.remove('down');
                                 arrow.classList.add('right');
                             }
-                            socket.emit(accordion_id, {expanded: nestedControls.classList.contains('expanded')});
+                            socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
                         });
                     } else if (contentItem.type === 'tab') {
                         var tab_id = contentItem.id;
                         const tab = document.getElementById(tab_id);
                         const active_tab_id = contentItem.active_tab_id;
                         
-                        // 获取所有标签和页面内容元素
                         const tabs = document.querySelectorAll('.tab');
                         const pages = document.querySelectorAll('.tab-content');
 
                         tabs.forEach(t => t.classList.remove('active'));
                         pages.forEach(p => p.classList.remove('active'));
 
-                        // 当前点击的 tab 添加 active 类
                         var t = tabs[active_tab_id];
                         t.classList.add('active');
 
-                        // 找到对应的页面内容并添加 active 类
                         const pageId = t.getAttribute('data-page');
                         document.getElementById(pageId).classList.add('active');
 
-                        // 为每个 tab 添加点击事件
                         tabs.forEach(tab => {
                             tab.addEventListener('click', function() {
-                                // 移除所有 tab 和内容的 active 类
                                 tabs.forEach(t => t.classList.remove('active'));
                                 pages.forEach(p => p.classList.remove('active'));
 
-                                // 当前点击的 tab 添加 active 类
                                 this.classList.add('active');
 
-                                // 找到对应的页面内容并添加 active 类
                                 const pageId = this.getAttribute('data-page');
                                 document.getElementById(pageId).classList.add('active');
                                 
@@ -673,7 +972,6 @@
             }
         );
         
-        // 阻止默认触摸事件，确保侧边栏可以滚动
         sidebar.addEventListener('touchstart', function(event) {
             event.stopPropagation();
         }, { passive: false });

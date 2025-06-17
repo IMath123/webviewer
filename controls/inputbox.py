@@ -20,89 +20,16 @@ class Inputbox(BasicControl):
         self.desc    = desc
 
     def get_html(self) -> str:
-        inputbox_html = '''
-        <style>
-        .input-container {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 12px;
-            position: relative;
-        }
-        
-        .input-label {
-            font-weight: 500;
-            color: #2d3748;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        
-        .input-wrapper {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        input[type="text"] {
-            padding: 12px 16px;
-            font-size: 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            outline: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            background: white;
-            width: 100%;
-            color: #2d3748;
-            font-weight: 500;
-        }
-
-        input[type="text"]:hover {
-            border-color: #cbd5e0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        input[type="text"]:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .checkmark {
-            display: none;
-            position: absolute;
-            right: 12px;
-            font-size: 18px;
-            color: #10b981;
-            animation: checkmarkAppear 0.3s ease;
-        }
-        
-        @keyframes checkmarkAppear {
-            0% {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        .input-desc {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
-            font-style: italic;
-        }
-        </style>
-        '''
-
-        inputbox_html += f'''
-        <div class="input-container">
-            <label class="input-label">{self.label}</label>
-            <div class="input-wrapper">
-                <input type="text" id="{self._id}" placeholder="{self.desc}" value="{self.content}">
-                <span id="{self._id}-checkmark" class="checkmark">✓</span>
+        inputbox_html = f'''
+        <div class="control-group">
+            <div class="inputbox-container">
+                <label for="{self._id}" class="control-label">{self.label}</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" id="{self._id}" class="control-inputbox" placeholder="{self.desc or ''}">
+                    <span id="{self._id}-checkmark" class="inputbox-checkmark">✓</span>
+                </div>
+                {f'<div class="inputbox-desc">{self.desc}</div>' if self.desc else ''}
             </div>
-            {f'<div class="input-desc">{self.desc}</div>' if self.desc else ''}
         </div>
         '''
         
