@@ -1,5 +1,6 @@
 from typing import Any, Callable, Optional, Union, Dict, List
 from .base import BasicControl
+import os
 
 
 class Dropdown(BasicControl):
@@ -68,3 +69,22 @@ class Dropdown(BasicControl):
                 raise ValueError("option must be in options")
             
             self.options = options
+
+class ThemeDropdown(Dropdown):
+    def __init__(self, init_option=None, callback=None):
+        # 自动扫描 themes 目录
+        themes_dir = os.path.join(os.path.dirname(__file__), '..', 'templates', 'themes')
+        theme_files = [f for f in os.listdir(themes_dir) if f.startswith('theme-') and f.endswith('.css')]
+        options = [f[len('theme-'):-len('.css')] for f in theme_files]
+        options.sort()
+        if not options:
+            options = ["one-dark"]  # 兜底
+        if init_option is None or init_option not in options:
+            init_option = options[0]
+        super().__init__(
+            text="主题切换",
+            init_option=init_option,
+            options=options,
+            callback=callback
+        )
+        self._id = "theme_dropdown"  # 强制 id
