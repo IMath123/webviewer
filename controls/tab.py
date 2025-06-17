@@ -4,6 +4,7 @@ from . import *
 from collections import OrderedDict
 import numpy as np
 import copy
+from .inputbox import Inputbox
 
 
 class Tab(BasicControl):
@@ -45,65 +46,116 @@ class Tab(BasicControl):
     def get_html(self) -> str:
         tab_html = '''
         <style>
+        .tab-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        
         /* Tab 按钮样式 */
         .tab {
             cursor: pointer;
-            padding: 10px 10px;
-            margin-right: 5px;
-            background-color: #f1f1f1;
-            border: 1px solid #ccc;
-            border-radius: 10px; /* 圆角 */
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            border-radius: 12px;
             display: inline-block;
-            transition: background-color 0.3s, box-shadow 0.3s; /* 动画效果 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            color: #64748b;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            color: #667eea;
+        }
+        
+        .tab:hover::before {
+            left: 100%;
         }
 
         /* 选中状态的 tab 样式 */
         .tab.active {
-            background-color: #007BFF;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .tab.active::before {
+            display: none;
         }
 
         /* Tab 内容容器样式 */
         .tab-content {
             display: none;
-            padding: 20px;
-            border-radius: 10px; /* 圆角 */
-            margin-top: 10px;
-            background: rgba(255, 255, 255, 0.1); /* 半透明背景 */
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px); /* 毛玻璃效果：模糊 */
-            border: 1px solid rgba(255, 255, 255, 0.2); /* 边框透明度 */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* 激活状态的 tab 内容 */
         .tab-content.active {
             display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .tab-content-wrapper {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         </style>
-
         '''
-        tab_html += f'<div id={self._id}>'
+        tab_html += f'<div id={self._id} class="tab-container">'
+        tab_html += '<div class="tab-header">'
 
         for i, title in enumerate(self.pages.keys()):
             div_type = "tab active" if i == 0 else "tab"
             tab_html += f'''
                 <div class="{div_type}" data-page="{self._id}-page-{i}">{title}</div>
-
             '''
         tab_html += '</div>\n'
         
-        tab_html += '<div id="pages">\n'
+        tab_html += '<div class="tab-content-wrapper">\n'
         for i, title in enumerate(self.pages.keys()):
-            actived = "tab-content activate" if i == 0 else "tab-content"
+            actived = "tab-content active" if i == 0 else "tab-content"
             tab_html += f'<div id="{self._id}-page-{i}" class="{actived}">'
             for control in self.pages[title]["controls"]:
-                # control = self.pages[title]["controls"][control_name]
                 html = control.get_html()
                 tab_html += html
             tab_html += '</div>'
             
-        tab_html += '</div>'
+        tab_html += '</div></div>'
         
         return tab_html
     

@@ -54,6 +54,13 @@ class Slider(BasicControl):
             flex-direction: column;
             align-items: center;
             white-space: nowrap;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* 第一行：标题和当前值 */
@@ -61,39 +68,35 @@ class Slider(BasicControl):
             display: flex;
             justify-content: space-between;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             align-items: center;
+        }
+
+        .slider-header span {
+            font-weight: 500;
+            color: #2d3748;
+            font-size: 14px;
         }
 
         /* 当前值输入框 */
         .slider-input {
-            max-width: 40px;
-            min-width: 20px;
+            max-width: 50px;
+            min-width: 30px;
             text-align: center;
-            font-size: 16px;
-            padding: 1px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
+            font-size: 14px;
+            padding: 6px 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             outline: none;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            background: white;
+            color: #2d3748;
+            font-weight: 500;
         }
 
         .slider-input:focus {
-            border-color: #007BFF;
-        }
-
-        /* 第二行：最小值、滑块、最大值 */
-        .slider-row {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-
-        /* 最小值和最大值 */
-        .slider-min, .slider-max {
-            font-size: 14px;
-            width: 30px;
-            text-align: center;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         /* 滑块样式 */
@@ -101,35 +104,52 @@ class Slider(BasicControl):
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 6px;
-            background: #ddd;
+            height: 8px;
+            background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e0 100%);
             outline: none;
-            opacity: 0.7;
-            transition: opacity .2s;
-            margin: 0 10px;
+            opacity: 1;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .slider:hover {
-            opacity: 1;
+            background: linear-gradient(90deg, #cbd5e0 0%, #a0aec0 100%);
         }
 
         /* 滑块的圆形拖动按钮 */
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #007BFF;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             cursor: pointer;
             border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
         }
 
         .slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            background: #007BFF;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             cursor: pointer;
             border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
         }
         </style>
 
@@ -146,11 +166,6 @@ class Slider(BasicControl):
         </div> 
 
         '''
-            # <div class="slider-row">
-            #     <span class="slider-min">{self.min}</span> 
-            #     <input type="range" min="{self.min}" max="{self.max}" step="{self.step}" value="{self.value}" class="slider" id="{self.get_id()}">
-            #     <span class="slider-max">{self.max}</span>
-            # </div>
         
         return slider_html
     

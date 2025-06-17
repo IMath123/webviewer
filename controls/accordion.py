@@ -44,13 +44,50 @@ class Accordion(BasicControl):
                 cursor: pointer;
                 display: flex;
                 align-items: center;
-                font-size: 14px;
-                font-weight: bold;
+                font-size: 16px;
+                font-weight: 600;
+                padding: 12px 16px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
             }
+            
+            .accordion::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+            
+            .accordion:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            }
+            
+            .accordion:hover::before {
+                left: 100%;
+            }
+            
             .arrow {
-                display: inline-block;
-                margin-right: 10px;
-                transition: transform 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+                width: 24px;
+                height: 24px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                font-size: 12px;
             }
 
             .arrow.right {
@@ -60,11 +97,31 @@ class Accordion(BasicControl):
             .arrow.down {
                 transform: rotate(90deg);
             }
+            
+            .arrow:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(1.1);
+            }
 
             .nested-controls {
-                display: none;
-                margin-top: 10px;
-                margin-left: 20px;
+                max-height: 0;
+                overflow: hidden;
+                margin-top: 0;
+                margin-left: 0;
+                padding: 0 20px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 0 0 12px 12px;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            
+            .nested-controls.expanded {
+                max-height: 1000px;
+                margin-top: 6px;
+                padding: 12px 16px;
+                opacity: 1;
+                transform: translateY(0);
             }
 
             .nested-controls button {
@@ -76,14 +133,13 @@ class Accordion(BasicControl):
 
         accordion_html += f'''
             <div id={self._id} class="accordion">
-                <span id="{self._id}-arrow" class="arrow right">▶</span>
+                <span id="{self._id}-arrow" class="arrow {'down' if self.expanded else 'right'}">▶</span>
                 {self.text}
             </div>
-
         '''
         
         accordion_html += f'''
-            <div id="{self._id}-nestedControls" class="nested-controls">
+            <div id="{self._id}-nestedControls" class="nested-controls {'expanded' if self.expanded else ''}">
         '''
         
         for control_name in self.nested_controls_names:
@@ -92,7 +148,6 @@ class Accordion(BasicControl):
             accordion_html += html
 
         accordion_html += '''
-
             </div>
         '''
         

@@ -24,50 +24,85 @@ class Inputbox(BasicControl):
         <style>
         .input-container {
             display: flex;
-            align-items: center;
-            white-space: nowrap;
-            position: relative; /* 让打勾符号在输入框外部排列 */
+            flex-direction: column;
+            margin-bottom: 12px;
+            position: relative;
         }
         
-        .input-container div {
-            margin-right: 15px; /* 标签和输入框之间的间距 */
+        .input-label {
+            font-weight: 500;
+            color: #2d3748;
             font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
         }
 
         input[type="text"] {
-            padding: 2px 3px;
-            font-size: 13px;
-            border: 2px solid #ddd;
-            flex-grow: 1; /* 使输入框占据剩余的宽度 */
-            border-radius: 5px;
+            padding: 12px 16px;
+            font-size: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
             outline: none;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: white;
             width: 100%;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        input[type="text"]:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         input[type="text"]:focus {
-            border-color: #007BFF;
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-            background-color: #f0f8ff;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .checkmark {
-            display: none; /* 初始隐藏打勾符号 */
-            font-size: 24px;
-            color: green;
-            margin-left: 10px; /* 让打勾符号离输入框有一点间隔 */
+            display: none;
+            position: absolute;
+            right: 12px;
+            font-size: 18px;
+            color: #10b981;
+            animation: checkmarkAppear 0.3s ease;
+        }
+        
+        @keyframes checkmarkAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .input-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+            font-style: italic;
         }
         </style>
-        
         '''
 
         inputbox_html += f'''
         <div class="input-container">
-            <div>{self.label}</div>
-            <input type="text" id="{self._id}" placeholder="{self.desc}">
-            <span id="{self._id}-checkmark" class="checkmark">&#10003;</span>
+            <label class="input-label">{self.label}</label>
+            <div class="input-wrapper">
+                <input type="text" id="{self._id}" placeholder="{self.desc}" value="{self.content}">
+                <span id="{self._id}-checkmark" class="checkmark">✓</span>
+            </div>
+            {f'<div class="input-desc">{self.desc}</div>' if self.desc else ''}
         </div>
         '''
         
