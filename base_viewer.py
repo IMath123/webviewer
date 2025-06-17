@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import copy
 import json
@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from .controls import *
 from .utils import *
 import uuid
+import os
 
 
 class Session:
@@ -29,6 +30,7 @@ class Session:
             adjustment_step       : float         = 0.05,
             use_dynamic_resolution: bool          = True,
             force_fix_aspect_ratio: bool          = True,
+            default_theme         : str           = "one-dark",
         ):
         self._sid = sid
 
@@ -71,6 +73,9 @@ class Session:
 
         self.manually_image_width = None
         self.manually_image_height = None
+
+        self.default_theme = default_theme
+
         # UI锁定标志，防止重复添加控件
         self._ui_locked = False
     
@@ -382,6 +387,12 @@ class Session:
         control = Image(image, callback)
         self.add_control(name, control)
 
+    def add_theme_selector(self, callback: Callable[[BasicControl], None] = None):
+        """添加主题切换控件"""
+        from .controls.dropdown import ThemeDropdown
+        control = ThemeDropdown(init_option=self.default_theme, callback=callback)
+        self.add_control("theme_dropdown", control)
+
 
 class BaseWebViewer(ABC):
     
@@ -390,53 +401,24 @@ class BaseWebViewer(ABC):
         self.image_height = height
         
         self._app = Flask(__name__)
-        self._socketio = SocketIO(self._app)
+        self._socketio = SocketIO(self._app, cors_allowed_origins="*")
         
-        self._controls: List[Tuple[str, BasicControl]] = []
-
+        self._sessions = {}
+        self._shared_session = None
         self._connect_num = 0
-        self._sessions = dict()
-        self._shared_session: Session = None
-
-        # self._target_fps = 60
-        # self._force_fix_aspect_ratio = True
-        # self._use_dynamic_resolution = True
-        # self._min_pixel              = None
-        # self._max_pixel              = None
-        # self._adjustment_step        = None
-
+        self._controls = {}
+        self._controls_names = []
+        
+        # 默认主题配置
+        self._default_theme = "one-dark"  # 可以在子类中修改
+        
         @self._app.route('/')
         def index():
             return render_template('index.html')
         
-    # def set_target_fps(self, fps: float):
-    #     self._target_fps = fps
-    
-    # def get_target_fps(self) -> float:
-    #     return self._target_fps
-    
-    # def set_force_fix_aspect_ratio(self, is_force_fix_aspect_ratio: bool):
-    #     self._force_fix_aspect_ratio = is_force_fix_aspect_ratio
-        
-    # def set_fixed_resolution(
-    #         self,
-    #         width : Optional[int] = None,
-    #         height: Optional[int] = None,
-    #     ):
-    #     self._use_dynamic_resolution = False
-    #     self._image_width            = width
-    #     self._image_height           = height
-        
-    # def set_dynamic_resolution(
-    #         self,
-    #         min_pixel:       Optional[int]   = None,
-    #         max_pixel:       Optional[int]   = None,
-    #         adjustment_step: Optional[float] = None,
-    #     ) -> None: 
-    #     self._use_dynamic_resolution = True
-    #     self._min_pixel              = min_pixel
-    #     self._max_pixel              = max_pixel
-    #     self._adjustment_step        = adjustment_step
+        @self._app.route('/themes/<path:filename>')
+        def themes(filename):
+            return send_from_directory('templates/themes', filename)
         
     def _clamp_with_ratio(self, session: Session, width: int, height: int):
         return session.clamp_with_ratio(width, height)
@@ -513,6 +495,7 @@ class BaseWebViewer(ABC):
             width                  = self.image_width,
             height                 = self.image_height,
             sid                    = sid,
+            default_theme          = self._default_theme,
             # force_fix_aspect_ratio = self._force_fix_aspect_ratio,
             # use_dynamic_resolution = self._use_dynamic_resolution,
             # target_frame_rate      = self._target_fps,
@@ -559,6 +542,10 @@ class BaseWebViewer(ABC):
                     contents.append(content)
 
             htmls = "\n".join(htmls)
+
+            # 添加设置默认主题的JavaScript代码
+            default_theme_script = f'<script>setTheme("theme-{self._default_theme}");</script>'
+            htmls += default_theme_script
 
             emit('render_controls', {'htmls': htmls, 'contents': contents})
 
@@ -665,3 +652,20 @@ class BaseWebViewer(ABC):
             session.last_y = data['last_y']
 
             self.on_mouse_move(session)
+
+    def set_default_theme(self, theme: str):
+        """设置默认主题"""
+        # 检查themes目录
+        themes_dir = os.path.join(os.path.dirname(__file__), 'templates', 'themes')
+        if not os.path.exists(themes_dir):
+            raise ValueError(f"Themes directory not found: {themes_dir}")
+        
+        # 获取所有可用的主题文件
+        theme_files = [f for f in os.listdir(themes_dir) if f.startswith('theme-') and f.endswith('.css')]
+        available_themes = [f[len('theme-'):-len('.css')] for f in theme_files]
+        
+        # 检查输入的theme是否有效
+        if theme not in available_themes:
+            raise ValueError(f"Theme '{theme}' not found. Available themes: {available_themes}")
+        
+        self._default_theme = theme
