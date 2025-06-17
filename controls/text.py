@@ -15,9 +15,11 @@ class Text(BasicControl):
         self.text = text
         
     def get_html(self) -> str:
+        # 将\n转换为HTML的<br>标签
+        formatted_text = self.text.replace('\n', '<br>')
         text_html = f'''
         <div class="control-group">
-            <div id="{self._id}" class="control-text">{self.text}</div>
+            <div id="{self._id}" class="control-text">{formatted_text}</div>
         </div>
         '''
         
@@ -25,7 +27,7 @@ class Text(BasicControl):
     
     def get_content(self) -> Optional[Dict]:
         return {
-            "text": self.text
+            "text": self.text.replace('\n', '<br>')
         }
 
     def update(self,
@@ -34,3 +36,6 @@ class Text(BasicControl):
 
         if text is not None:
             self.text = text
+            # 更新HTML内容，将\n转换为<br>标签
+            formatted_text = self.text.replace('\n', '<br>')
+            self._update_html_content(formatted_text)

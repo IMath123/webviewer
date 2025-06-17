@@ -1244,10 +1244,10 @@
                         var text = document.getElementById(text_id);
                         var text_value = contentItem.text;
 
-                        text.textContent = text_value;
+                        text.innerHTML = text_value;
                         socket.on('update_' + text_id, function(data) {
                             var value = data.text;
-                            text.textContent = value;
+                            text.innerHTML = value;
                         });
 
                     } else if (contentItem.type === 'dropdown') {
