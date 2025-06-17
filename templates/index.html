@@ -4,10 +4,52 @@
     <meta charset="UTF-8">
     <title>WebViewer</title>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent: #00d4aa;
+            --sidebar-bg: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            --sidebar-border: #404040;
+            --sidebar-shadow: rgba(0, 0, 0, 0.3);
+            --control-bg: rgba(255, 255, 255, 0.03);
+            --control-border: rgba(255, 255, 255, 0.08);
+            --control-hover-bg: rgba(255, 255, 255, 0.05);
+            --control-hover-border: rgba(255, 255, 255, 0.12);
+            --button-bg: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+            --button-hover-bg: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+            --input-bg: #2a2a2a;
+            --input-border: #555;
+            --input-focus-border: #00d4aa;
+            --canvas-bg: #0f0f0f;
+            --scrollbar-track: #2a2a2a;
+            --scrollbar-thumb: #555;
+            --scrollbar-thumb-hover: #666;
+            --info-bg: #252525;
+            --info-border: #404040;
+            --fps-color: #00d4aa;
+            --control-label-color: #b0b0b0;
+            --button-border: #555;
+            --button-hover-border: #666;
+            --slider-bg: #404040;
+            --slider-hover-bg: #505050;
+            --slider-thumb-bg: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            --slider-thumb-shadow: rgba(0, 212, 170, 0.4);
+            --dropdown-hover-bg: #323232;
+            --dropdown-hover-border: #666;
+            --checkbox-accent: #00d4aa;
+            --sidebar-control-bg: rgba(255, 255, 255, 0.1);
+            --sidebar-control-border: rgba(255, 255, 255, 0.2);
+            --sidebar-control-hover-bg: rgba(255, 255, 255, 0.15);
+            --sidebar-control-hover-border: rgba(255, 255, 255, 0.3);
+            --expand-button-bg: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            --expand-button-hover-bg: linear-gradient(135deg, #353535 0%, #262626 100%);
+            --expand-button-border: #404040;
+            --expand-button-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --expand-button-hover-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+            --button-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --button-active-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            --fps-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
         }
-        
         body, html {
             margin: 0;
             padding: 0;
@@ -15,8 +57,8 @@
             height: 100%;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a1a;
-            color: #e0e0e0;
+            background: var(--bg-color);
+            color: var(--text-color);
         }
         
         .container {
@@ -31,13 +73,13 @@
             display: block;
             height: 100%;
             flex: 1;
-            background: #0f0f0f;
+            background: var(--canvas-bg);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #sidebar {
-            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
-            color: #e0e0e0;
+            background: var(--sidebar-bg);
+            color: var(--text-color);
             width: 320px;
             height: 100%;
             display: flex;
@@ -48,8 +90,8 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             flex-shrink: 0;
-            border-left: 1px solid #404040;
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+            border-left: 1px solid var(--sidebar-border);
+            box-shadow: -2px 0 10px var(--sidebar-shadow);
         }
         
         #sidebar::-webkit-scrollbar {
@@ -57,16 +99,16 @@
         }
         
         #sidebar::-webkit-scrollbar-track {
-            background: #2a2a2a;
+            background: var(--scrollbar-track);
         }
         
         #sidebar::-webkit-scrollbar-thumb {
-            background: #555;
+            background: var(--scrollbar-thumb);
             border-radius: 3px;
         }
         
         #sidebar::-webkit-scrollbar-thumb:hover {
-            background: #666;
+            background: var(--scrollbar-thumb-hover);
         }
         
         body.sidebar-collapsed #sidebar {
@@ -77,17 +119,17 @@
         }
         
         #info {
-            background: #252525;
+            background: var(--info-bg);
             padding: 15px 20px;
-            border-bottom: 1px solid #404040;
+            border-bottom: 1px solid var(--info-border);
             margin-bottom: 12px;
         }
         
         #fps {
             font-size: 14px;
             font-weight: 500;
-            color: #00d4aa;
-            text-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
+            color: var(--fps-color);
+            text-shadow: var(--fps-shadow);
         }
         
         .page {
@@ -116,9 +158,9 @@
         
         #pinButton, #collapseButton {
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #e0e0e0;
+            background: var(--sidebar-control-bg);
+            border: 1px solid var(--sidebar-control-border);
+            color: var(--text-color);
             font-size: 16px;
             padding: 8px;
             border-radius: 6px;
@@ -127,15 +169,15 @@
         }
         
         #pinButton:hover, #collapseButton:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: var(--sidebar-control-hover-bg);
+            border-color: var(--sidebar-control-hover-border);
             transform: translateY(-1px);
         }
         
         #pinButton.active {
-            background: rgba(0, 212, 170, 0.2);
-            border-color: #00d4aa;
-            color: #00d4aa;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-color);
         }
         
         #collapseButton .icon {
@@ -147,22 +189,22 @@
             top: 15px;
             right: 15px;
             cursor: pointer;
-            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
-            color: #e0e0e0;
-            border: 1px solid #404040;
+            background: var(--expand-button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--expand-button-border);
             border-radius: 8px;
             padding: 12px;
             font-size: 18px;
             display: none;
             z-index: 200;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--expand-button-shadow);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #expandButton:hover {
-            background: linear-gradient(135deg, #353535 0%, #262626 100%);
+            background: var(--expand-button-hover-bg);
             transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--expand-button-hover-shadow);
         }
         
         .icon {
@@ -177,31 +219,31 @@
         .control-group {
             margin: 0 12px 8px 12px;
             padding: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
             border-radius: 6px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .control-group:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.12);
+            background: var(--control-hover-bg);
+            border-color: var(--control-hover-border);
             transform: translateY(-1px);
         }
         
         .control-label {
             font-size: 12px;
             font-weight: 500;
-            color: #b0b0b0;
+            color: var(--control-label-color);
             margin-bottom: 4px;
             display: block;
         }
         
         /* 按钮样式 */
         .control-button {
-            background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
-            color: #e0e0e0;
-            border: 1px solid #555;
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--button-border);
             padding: 8px 12px;
             margin-bottom: 4px;
             cursor: pointer;
@@ -211,18 +253,19 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
             text-align: center;
+            box-shadow: var(--button-shadow);
         }
         
         .control-button:hover {
-            background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
-            border-color: #666;
+            background: var(--button-hover-bg);
+            border-color: var(--button-hover-border);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--button-shadow);
         }
         
         .control-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--button-active-shadow);
         }
         
         /* 滑块样式 */
@@ -244,16 +287,16 @@
             text-align: center;
             font-size: 12px;
             padding: 4px 6px;
-            border: 1px solid #555;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
-            background: #2a2a2a;
-            color: #e0e0e0;
+            background: var(--input-bg);
+            color: var(--text-color);
             outline: none;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .slider-input:focus {
-            border-color: #00d4aa;
+            border-color: var(--input-focus-border);
             box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
         }
         
@@ -262,14 +305,14 @@
             appearance: none;
             width: 100%;
             height: 4px;
-            background: #404040;
+            background: var(--slider-bg);
             outline: none;
             border-radius: 2px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .slider:hover {
-            background: #505050;
+            background: var(--slider-hover-bg);
         }
         
         .slider::-webkit-slider-thumb {
@@ -277,10 +320,10 @@
             appearance: none;
             width: 16px;
             height: 16px;
-            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            background: var(--slider-thumb-bg);
             cursor: pointer;
             border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.4);
+            box-shadow: var(--slider-thumb-shadow);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -292,17 +335,17 @@
         .slider::-moz-range-thumb {
             width: 16px;
             height: 16px;
-            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            background: var(--slider-thumb-bg);
             cursor: pointer;
             border-radius: 50%;
             border: none;
-            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.4);
+            box-shadow: var(--slider-thumb-shadow);
         }
         
         /* 文本样式 */
         .control-text {
             font-size: 13px;
-            color: #e0e0e0;
+            color: var(--text-color);
             padding: 4px 0;
             line-height: 1.3;
         }
@@ -311,10 +354,10 @@
         .control-dropdown {
             width: 100%;
             padding: 6px 10px;
-            background: #2a2a2a;
-            border: 1px solid #555;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
             border-radius: 6px;
-            color: #e0e0e0;
+            color: var(--text-color);
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -322,12 +365,12 @@
         }
         
         .control-dropdown:hover {
-            border-color: #666;
-            background: #323232;
+            border-color: var(--dropdown-hover-border);
+            background: var(--dropdown-hover-bg);
         }
         
         .control-dropdown:focus {
-            border-color: #00d4aa;
+            border-color: var(--input-focus-border);
             box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
         }
         
@@ -343,7 +386,7 @@
         .control-checkbox {
             width: 16px;
             height: 16px;
-            accent-color: #00d4aa;
+            accent-color: var(--checkbox-accent);
             cursor: pointer;
         }
         
@@ -357,28 +400,28 @@
         .control-inputbox {
             width: 100%;
             padding: 6px 10px;
-            background: #2a2a2a;
-            border: 1px solid #555;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
             border-radius: 6px;
-            color: #e0e0e0;
+            color: var(--text-color);
             font-size: 14px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
         }
         
         .control-inputbox:focus {
-            border-color: #00d4aa;
+            border-color: var(--input-focus-border);
             box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
         }
         
         .inputbox-desc {
             font-size: 11px;
-            color: #888;
+            color: var(--control-label-color);
             margin-top: 2px;
         }
         
         .inputbox-checkmark {
-            color: #00d4aa;
+            color: var(--accent);
             font-size: 14px;
             display: none;
             margin-left: 6px;
@@ -387,15 +430,15 @@
         /* 分割线样式 */
         .control-divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent 0%, #404040 50%, transparent 100%);
+            background: linear-gradient(90deg, transparent 0%, var(--info-border) 50%, transparent 100%);
             margin: 12px 0;
             border: none;
         }
         
         /* 手风琴样式 */
         .accordion-header {
-            background: linear-gradient(135deg, #353535 0%, #2a2a2a 100%);
-            border: 1px solid #555;
+            background: var(--button-bg);
+            border: 1px solid var(--button-border);
             border-radius: 6px;
             padding: 8px 12px;
             cursor: pointer;
@@ -404,16 +447,17 @@
             align-items: center;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             margin-bottom: 4px;
+            box-shadow: var(--button-shadow);
         }
         
         .accordion-header:hover {
-            background: linear-gradient(135deg, #404040 0%, #353535 100%);
-            border-color: #666;
+            background: var(--button-hover-bg);
+            border-color: var(--button-hover-border);
         }
         
         .accordion-arrow {
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #00d4aa;
+            color: var(--accent);
         }
         
         .accordion-arrow.down {
@@ -436,7 +480,7 @@
         
         /* 标签页样式 */
         .tab-container {
-            border: 1px solid #555;
+            border: 1px solid var(--button-border);
             border-radius: 6px;
             overflow: hidden;
             margin-bottom: 8px;
@@ -444,21 +488,21 @@
         
         .tab-header {
             display: flex;
-            background: #2a2a2a;
-            border-bottom: 1px solid #555;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--button-border);
         }
         
         .tab {
             flex: 1;
             padding: 8px 12px;
-            background: #2a2a2a;
+            background: var(--input-bg);
             border: none;
-            color: #b0b0b0;
+            color: var(--text-color);
             cursor: pointer;
             font-size: 13px;
             font-weight: 500;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-right: 1px solid #555;
+            border-right: 1px solid var(--button-border);
         }
         
         .tab:last-child {
@@ -466,20 +510,20 @@
         }
         
         .tab:hover {
-            background: #353535;
-            color: #e0e0e0;
+            background: var(--dropdown-hover-bg);
+            color: var(--text-color);
         }
         
         .tab.active {
-            background: #00d4aa;
-            color: #1a1a1a;
+            background: var(--accent);
+            color: var(--text-color);
             font-weight: 600;
         }
         
         .tab-content {
             display: none;
             padding: 12px;
-            background: #252525;
+            background: var(--control-bg);
             animation: fadeIn 0.3s ease-in-out;
         }
         
@@ -491,7 +535,7 @@
         .control-image {
             max-width: 100%;
             border-radius: 6px;
-            border: 1px solid #555;
+            border: 1px solid var(--button-border);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -500,6 +544,10 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
     </style>
+    <link rel="stylesheet" href="themes/theme-one-dark.css">
+    <link rel="stylesheet" href="themes/theme-one-light.css">
+    <link rel="stylesheet" href="themes/theme-github-dark.css">
+    <link rel="stylesheet" href="themes/theme-github-light.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
@@ -851,13 +899,20 @@
 
                         dropdown.addEventListener('change', function() {
                             var value = dropdown.value;
+                            // 主题切换专用
+                            if(dropdown_id === 'theme_dropdown') {
+                                setTheme('theme-' + value);
+                            }
                             socket.emit(dropdown_func, {option: value});
                         });
                         
                         socket.on('update_' + dropdown_id, function(data) {
-                            var option = data.value;
+                            var option = data.option;
                             dropdown.value = option;
-                            socket.emit(dropdown_func, {option: option});
+                            // 主题切换专用
+                            if(dropdown_id === 'theme_dropdown') {
+                                setTheme('theme-' + option);
+                            }
                         });
                         
                     } else if (contentItem.type === 'checkbox') {
@@ -986,6 +1041,18 @@
         }, { passive: false });
 
         resizeCanvas(true);
+
+        // 主题切换逻辑
+        function setTheme(theme) {
+            // 移除所有可能的主题类
+            document.body.classList.remove(
+                'theme-one-dark', 'theme-one-light',
+                'theme-github-dark', 'theme-github-light'
+            );
+            // 添加新主题类
+            document.body.classList.add(theme);
+        }
+        // 默认主题由后端控制，不在这里设置
     </script>
 </body>
 </html>
