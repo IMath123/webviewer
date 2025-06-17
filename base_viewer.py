@@ -32,7 +32,6 @@ class Session:
         ):
         self._sid = sid
 
-        print("new", self._sid)
         self.image_width     = width
         self.image_height    = height
         self.canvas_width    = None
@@ -72,12 +71,22 @@ class Session:
 
         self.manually_image_width = None
         self.manually_image_height = None
+        # UI锁定标志，防止重复添加控件
+        self._ui_locked = False
     
+    def lock_ui(self):
+        """锁定UI，禁止后续添加控件"""
+        self._ui_locked = True
+
+    def _check_ui_locked(self):
+        return self._ui_locked
+
     def _set_controls(self, controls: List[Tuple[str, BasicControl]], copy: bool):
+        if self._check_ui_locked():
+            return
         for name, control in controls:
             if name in self._controls_names:
                 raise RuntimeError(f"Control name {name} already exists")
-            
             self._controls_names.append(name)
             self._controls[name] = control.copy() if copy else control
     
@@ -316,6 +325,8 @@ class Session:
             time.sleep(sleep_time)
 
     def add_control(self, name: str, control: BasicControl) -> None:
+        if self._check_ui_locked():
+            return
         if name is None:
             name = str(uuid.uuid4())
         if not isinstance(name, str):
@@ -387,46 +398,45 @@ class BaseWebViewer(ABC):
         self._sessions = dict()
         self._shared_session: Session = None
 
-        self._target_fps = 60
-
-        self._force_fix_aspect_ratio = True
-        self._use_dynamic_resolution = True
-        self._min_pixel              = None
-        self._max_pixel              = None
-        self._adjustment_step        = None
+        # self._target_fps = 60
+        # self._force_fix_aspect_ratio = True
+        # self._use_dynamic_resolution = True
+        # self._min_pixel              = None
+        # self._max_pixel              = None
+        # self._adjustment_step        = None
 
         @self._app.route('/')
         def index():
             return render_template('index.html')
         
-    def set_target_fps(self, fps: float):
-        self._target_fps = fps
+    # def set_target_fps(self, fps: float):
+    #     self._target_fps = fps
     
-    def get_target_fps(self) -> float:
-        return self._target_fps
+    # def get_target_fps(self) -> float:
+    #     return self._target_fps
     
-    def set_force_fix_aspect_ratio(self, is_force_fix_aspect_ratio: bool):
-        self._force_fix_aspect_ratio = is_force_fix_aspect_ratio
+    # def set_force_fix_aspect_ratio(self, is_force_fix_aspect_ratio: bool):
+    #     self._force_fix_aspect_ratio = is_force_fix_aspect_ratio
         
-    def set_fixed_resolution(
-            self,
-            width : Optional[int] = None,
-            height: Optional[int] = None,
-        ):
-        self._use_dynamic_resolution = False
-        self._image_width            = width
-        self._image_height           = height
+    # def set_fixed_resolution(
+    #         self,
+    #         width : Optional[int] = None,
+    #         height: Optional[int] = None,
+    #     ):
+    #     self._use_dynamic_resolution = False
+    #     self._image_width            = width
+    #     self._image_height           = height
         
-    def set_dynamic_resolution(
-            self,
-            min_pixel:       Optional[int]   = None,
-            max_pixel:       Optional[int]   = None,
-            adjustment_step: Optional[float] = None,
-        ) -> None: 
-        self._use_dynamic_resolution = True
-        self._min_pixel              = min_pixel
-        self._max_pixel              = max_pixel
-        self._adjustment_step        = adjustment_step
+    # def set_dynamic_resolution(
+    #         self,
+    #         min_pixel:       Optional[int]   = None,
+    #         max_pixel:       Optional[int]   = None,
+    #         adjustment_step: Optional[float] = None,
+    #     ) -> None: 
+    #     self._use_dynamic_resolution = True
+    #     self._min_pixel              = min_pixel
+    #     self._max_pixel              = max_pixel
+    #     self._adjustment_step        = adjustment_step
         
     def _clamp_with_ratio(self, session: Session, width: int, height: int):
         return session.clamp_with_ratio(width, height)
@@ -503,12 +513,12 @@ class BaseWebViewer(ABC):
             width                  = self.image_width,
             height                 = self.image_height,
             sid                    = sid,
-            force_fix_aspect_ratio = self._force_fix_aspect_ratio,
-            use_dynamic_resolution = self._use_dynamic_resolution,
-            target_frame_rate      = self._target_fps,
-            min_pixel              = self._min_pixel,
-            max_pixel              = self._max_pixel,
-            adjustment_step        = self._adjustment_step,
+            # force_fix_aspect_ratio = self._force_fix_aspect_ratio,
+            # use_dynamic_resolution = self._use_dynamic_resolution,
+            # target_frame_rate      = self._target_fps,
+            # min_pixel              = self._min_pixel,
+            # max_pixel              = self._max_pixel,
+            # adjustment_step        = self._adjustment_step,
         )
 
     def _init_routes(self, shared_session: bool):
@@ -551,6 +561,8 @@ class BaseWebViewer(ABC):
             htmls = "\n".join(htmls)
 
             emit('render_controls', {'htmls': htmls, 'contents': contents})
+
+            session.lock_ui()
             
 
         @self._socketio.on('disconnect')

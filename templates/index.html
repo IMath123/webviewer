@@ -712,11 +712,14 @@
 
         socket.on('render_controls', function(data) {
             var page = document.getElementById('page');
+            // 彻底清空 page
+            page.innerHTML = '';
+            // 创建并插入新的 controls
             var controls = document.createElement('div');
             controls.id = 'controls';
-            page.appendChild(controls);
-
             controls.innerHTML = data.htmls;
+            // 查看page的child的数量
+            page.appendChild(controls);
 
             var content = data.contents;
             for (var i = 0; i < content.length; i++) {
@@ -971,9 +974,8 @@
                         });
                     }
                 })(content[i]);
-                }
             }
-        );
+        });
         
         sidebar.addEventListener('touchstart', function(event) {
             event.stopPropagation();
