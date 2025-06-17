@@ -8,7 +8,7 @@ class Slider(BasicControl):
     
     def __init__(self,
                  text:       str,
-                 callback:   Optional[Callable[[Dict], None]],
+                 callback:   Optional[Callable[['Slider'], None]],
                  init_value: Union[str, int, float],
                  min:        Union[int, float],
                  max:        Union[int, float],

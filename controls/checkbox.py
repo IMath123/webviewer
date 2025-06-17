@@ -9,7 +9,7 @@ class Checkbox(BasicControl):
     def __init__(self,
                  text:     str,
                  checked:  bool,
-                 callback: Optional[Callable[[Dict], None]],
+                 callback: Optional[Callable[['Checkbox'], None]],
                  ) -> None:
 
         super().__init__(self.TYPE, callback)

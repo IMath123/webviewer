@@ -28,7 +28,7 @@ class Image(BasicControl):
     
     def __init__(self,
                  init_image: np.ndarray,
-                 callback: Optional[Callable[[Dict], None]],
+                 callback: Optional[Callable[['Image'], None]],
                  ) -> None:
 
         super().__init__(self.TYPE, callback)
@@ -53,7 +53,7 @@ class Image(BasicControl):
         }
 
     def update(self,
-               image: Union[np.ndarray, str],
+               image: Optional[Union[np.ndarray, str]] = None,
               ) -> None: 
 
         if image is not None:

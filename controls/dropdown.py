@@ -10,7 +10,7 @@ class Dropdown(BasicControl):
                  text:        str,
                  init_option: str,
                  options:     List[str],
-                 callback:    Optional[Callable[[Dict], None]],
+                 callback:    Optional[Callable[['Dropdown'], None]],
                  ) -> None:
 
         super().__init__(self.TYPE, callback)

@@ -8,7 +8,7 @@ class Button(BasicControl):
     
     def __init__(self,
                  text:     str,
-                 callback: Optional[Callable[[Dict], None]],
+                 callback: Optional[Callable[['Button'], None]],
                  ) -> None:
 
         super().__init__(self.TYPE, callback)

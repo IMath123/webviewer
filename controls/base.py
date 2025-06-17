@@ -60,7 +60,7 @@ class BasicControl:
     def get_type(self) -> str:
         return self._type
     
-    def get_callback(self) -> Optional[Callable[[Dict], None]]:
+    def get_callback(self) -> Optional[Callable[['BasicControl'], None]]:
         return self._callback
     
     def set_socketio(self, socketio: SocketIO, sid: str) -> None:
@@ -69,9 +69,18 @@ class BasicControl:
         def handle(data):
             raw_update_func(**data)
             if self._callback is not None:
-                self._callback(data)
+                self._callback(self)
         
         def _wrap_with_hook(method):
+            def wrapper(*args, **kwargs):
+                method(*args, **kwargs)  
+                content = self.get_content() 
+                if content is not None:
+                    socketio.emit("update_" + self._id, content, room=sid)
+
+            return wrapper
+
+        def _wrap_without_callback(method):
             def wrapper(*args, **kwargs):
                 method(*args, **kwargs)  
                 content = self.get_content() 
@@ -83,8 +92,9 @@ class BasicControl:
         if hasattr(self, 'update'):
             original_method = getattr(self, 'update')
             hooked_method = _wrap_with_hook(original_method)
+            no_callback_method = _wrap_without_callback(original_method)
             setattr(self, 'update', hooked_method)
-            setattr(self, 'update_without_callback', original_method)
+            setattr(self, 'update_without_callback', no_callback_method)
 
    
     def _get_content(self) -> List[Dict]:

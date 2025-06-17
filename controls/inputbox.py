@@ -10,7 +10,7 @@ class Inputbox(BasicControl):
                  label:     str,
                  init_text: str,
                  desc:      Optional[str],
-                 callback:  Optional[Callable[[Dict], None]],
+                 callback:  Optional[Callable[['Inputbox'], None]],
                  ) -> None:
 
         super().__init__(self.TYPE, callback)

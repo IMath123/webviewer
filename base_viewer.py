@@ -235,6 +235,23 @@ class Session:
             
             self.adjustment_step = adjustment_step
 
+    def is_dynamic_resolution_enabled(self) -> bool:
+        """判断是否启用了动态分辨率"""
+        return self.use_dynamic_resolution
+    
+    def get_dynamic_resolution_params(self) -> dict:
+        """获取动态分辨率的参数"""
+        return {
+            'use_dynamic_resolution': self.use_dynamic_resolution,
+            'min_pixel': self.min_pixel,
+            'max_pixel': self.max_pixel,
+            'adjustment_step': self.adjustment_step
+        }
+    
+    def is_fixed_aspect_ratio_enabled(self) -> bool:
+        """判断是否启用了固定长宽比"""
+        return self.force_fix_aspect_ratio
+
     def start(self, socketio, render_func):
         render_time = 0
 
@@ -297,6 +314,62 @@ class Session:
             render_time = time.time() - frame_start_time
             sleep_time = max(0, self.frame_interval - render_time)
             time.sleep(sleep_time)
+
+    def add_control(self, name: str, control: BasicControl) -> None:
+        if name is None:
+            name = str(uuid.uuid4())
+        if not isinstance(name, str):
+            raise TypeError('name must be a string')
+        if not isinstance(control, BasicControl):
+            raise TypeError('control must be a subclass of BasicControl')
+        if len(name) == 0:
+            raise ValueError('name must not be empty')
+        if "." in name:
+            raise ValueError("name must not contain '.'")
+        self._controls_names.append(name)
+        self._controls[name] = control
+
+    def add_button(self, name: str, text: str, callback: Callable[[BasicControl], None]) -> None:
+        control = Button(text, callback)
+        self.add_control(name, control)
+
+    def add_slider(self, name: str, text: str, callback: Callable[[BasicControl], None], init_value: Union[int, float], min: Union[int, float], max: Union[int, float], step: Union[int, float]) -> None:
+        control = Slider(text, callback, init_value, min, max, step)
+        self.add_control(name, control)
+
+    def add_text(self, name: str, text: str) -> None:
+        control = Text(text)
+        self.add_control(name, control)
+
+    def add_dropdown(self, name: str, text: str, init_option: str, options: List[str], callback: Callable[[BasicControl], None]) -> None:
+        control = Dropdown(text, init_option, options, callback)
+        self.add_control(name, control)
+
+    def add_divider(self) -> None:
+        control = Divider()
+        self.add_control(str(uuid.uuid4()), control)
+
+    def add_checkbox(self, name: str, text: str, init_value: bool, callback: Callable[[BasicControl], None]) -> None:
+        control = Checkbox(text, init_value, callback)
+        self.add_control(name, control)
+
+    def add_accordion(self, name: str, text: str, expanded: bool = True):
+        control = Accordion(text, expanded)
+        self.add_control(name, control)
+        return control
+
+    def add_tab(self, name: str):
+        control = Tab()
+        self.add_control(name, control)
+        return control
+
+    def add_inputbox(self, name: str, label: str, content: str, desc: str, callback: Callable[[BasicControl], None]):
+        control = Inputbox(label, content, desc, callback)
+        self.add_control(name, control)
+
+    def add_image(self, name: str, image: np.ndarray, callback: Callable[[BasicControl], None] = None):
+        control = Image(image, callback)
+        self.add_control(name, control)
 
 
 class BaseWebViewer(ABC):
@@ -419,136 +492,6 @@ class BaseWebViewer(ABC):
         self._shared_session = None
         self._connect_num = 0
 
-    # Controls
-    def add_control(self, name: str, control: BasicControl) -> None:
-        if name is None:
-            name = str(uuid.uuid4())
-
-        if not isinstance(name, str):
-            raise TypeError('name must be a string')
-        
-        if not isinstance(control, BasicControl):
-            raise TypeError('control must be a subclass of BasicControl')
-        
-        if len(name) == 0:
-            raise ValueError('name must not be empty')
-        
-        if "." in name:
-            raise ValueError("name must not contain '.'")
-        
-        self._controls.append((name, control))
-    
-    def get_control(self, name: str) -> BasicControl:
-        session = self._get_current_session()
-        
-        return session.get_control(name)
-
-    def add_button(
-            self, 
-            name:     str,
-            text:     str,
-            callback: Callable[[dict], None],
-        ) -> None:
-        
-        control = Button(text, callback)
-        
-        self.add_control(name, control)
-    
-    def add_slider(
-            self,
-            name:       str,
-            text:       str,
-            callback:   Callable[[dict], None],
-            init_value: Union[int, float],
-            min:        Union[int, float],
-            max:        Union[int, float],
-            step:       Union[int, float],
-        ) -> None:
-
-        control = Slider(
-            text, callback, init_value, min, max, step
-        )
-        
-        self.add_control(name, control)
-
-    def add_text(
-            self, 
-            name: str,
-            text: str,
-        ) -> None:
-        
-        control = Text(text)
-        
-        self.add_control(name, control)
-
-    def add_dropdown(
-            self,
-            name:        str,
-            text:        str,
-            init_option: str,
-            options:     List[str],
-            callback:    Callable[[dict], None],
-        ) -> None: 
-        
-        control = Dropdown(text, init_option, options, callback)
-
-        self.add_control(name, control)
-    
-    def add_divider(self) -> None:
-        
-        control = Divider()
-
-        self.add_control(None, control)
-        
-    def add_checkbox(self,
-                     name:       str,
-                     text:       str,
-                     init_value: bool,
-                     callback:   Callable[[dict], None],
-                     ) -> None:
-
-        control = Checkbox(text, init_value, callback)
-
-        self.add_control(name, control)
-    
-    def add_accordion(self,
-                      name: str,
-                      text: str,
-                      expanded: bool = True,
-    ):
-        control = Accordion(text, expanded)
-
-        self.add_control(name, control)
-        
-        return control
-
-    def add_tab(self, name: str):
-        control = Tab()
-
-        self.add_control(name, control)
-        
-        return control
-    
-    def add_inputbox(self,
-                     name:       str,
-                     label:    str,
-                     content:  str,
-                     desc:     str,
-                     callback: Callable[[dict], None],
-                     ):
-        control = Inputbox(label, content, desc, callback)
-        
-        self.add_control(name, control)
-    
-    def add_image(self,
-                  name:      str,
-                  image:    np.ndarray,
-                  callback: Callable[[dict], None] = None):
-
-        control = Image(image, callback)
-        
-        self.add_control(name, control)
-
     def _get_current_session(self):
         if self._shared_session is not None:
             return self._shared_session
@@ -593,6 +536,8 @@ class BaseWebViewer(ABC):
                 self._sessions[sid] = session
                 threading.Thread(target=session.start, args=(self._socketio, self.render)).start()
 
+            self.on_connect(session)
+            
             htmls = []
             contents = []
             for control_name in session._controls_names:
@@ -606,8 +551,6 @@ class BaseWebViewer(ABC):
             htmls = "\n".join(htmls)
 
             emit('render_controls', {'htmls': htmls, 'contents': contents})
-            
-            self.on_connect(session)
             
 
         @self._socketio.on('disconnect')

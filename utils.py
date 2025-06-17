@@ -1,10 +1,12 @@
 import numpy as np
-import torch
+# import torch  # 暂时注释掉torch导入
 import time
 import random
 import string
 import math
 from .gl.line import draw_lines
+from dataclasses import dataclass
+from typing import Any, Optional, Union
 
 
 def project_to_sphere(x, y, radius=1.0):
@@ -13,10 +15,13 @@ def project_to_sphere(x, y, radius=1.0):
     """
     dist = x**2 + y**2
     if dist <= radius**2:
-        z = torch.sqrt(torch.tensor(radius**2 - dist))  # 在球内
+        # z = torch.sqrt(torch.tensor(radius**2 - dist))  # 在球内
+        z = math.sqrt(radius**2 - dist)  # 在球内
     else:
-        z = torch.tensor(0.0)  # 在球外，投影到球面
-    return torch.tensor([x, y, z])
+        # z = torch.tensor(0.0)  # 在球外，投影到球面
+        z = 0.0  # 在球外，投影到球面
+    # return torch.tensor([x, y, z])
+    return np.array([x, y, z])
 
 def quaternion_multiply(q1, q2):
     """
@@ -28,18 +33,24 @@ def quaternion_multiply(q1, q2):
     x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
     y = w1 * y2 + y1 * w2 + z1 * x2 - x1 * z2
     z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2
-    return torch.tensor([w, x, y, z], dtype=torch.float32)
+    # return torch.tensor([w, x, y, z], dtype=torch.float32)
+    return np.array([w, x, y, z], dtype=np.float32)
 
 def quaternion_to_matrix(q):
     """
     将四元数转换为 3x3 的旋转矩阵。
     """
     w, x, y, z = q
-    return torch.tensor([
+    # return torch.tensor([
+    #     [1 - 2 * (y**2 + z**2), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+    #     [2 * (x * y + z * w), 1 - 2 * (x**2 + z**2), 2 * (y * z - x * w)],
+    #     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x**2 + y**2)]
+    # ], dtype=torch.float32)
+    return np.array([
         [1 - 2 * (y**2 + z**2), 2 * (x * y - z * w), 2 * (x * z + y * w)],
         [2 * (x * y + z * w), 1 - 2 * (x**2 + z**2), 2 * (y * z - x * w)],
         [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x**2 + y**2)]
-    ], dtype=torch.float32)
+    ], dtype=np.float32)
 
 
 def normalize(v):
@@ -193,3 +204,66 @@ class Camera:
             lines.append((u[i], v[i], u[j], v[j]))
         
         return lines
+
+@dataclass
+class ControlData:
+    """控件回调数据类，提供类型安全的访问方法"""
+    value: Any
+    control_id: str
+    control_type: str
+    
+    def get_int(self, key: str, default: int = 0) -> int:
+        """获取整数值"""
+        val = self._get_value(key)
+        try:
+            return int(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+    
+    def get_float(self, key: str, default: float = 0.0) -> float:
+        """获取浮点数值"""
+        val = self._get_value(key)
+        try:
+            return float(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+    
+    def get_str(self, key: str, default: str = "") -> str:
+        """获取字符串值"""
+        val = self._get_value(key)
+        return str(val) if val is not None else default
+    
+    def get_bool(self, key: str, default: bool = False) -> bool:
+        """获取布尔值"""
+        val = self._get_value(key)
+        if isinstance(val, bool):
+            return val
+        elif isinstance(val, str):
+            return val.lower() in ('true', '1', 'yes', 'on')
+        elif isinstance(val, (int, float)):
+            return bool(val)
+        return default
+    
+    def get_list(self, key: str, default: list = None) -> list:
+        """获取列表值"""
+        if default is None:
+            default = []
+        val = self._get_value(key)
+        return list(val) if isinstance(val, (list, tuple)) else default
+    
+    def _get_value(self, key: str) -> Any:
+        """根据键名获取值"""
+        # 如果key是'value'，直接返回self.value
+        if key == 'value':
+            return self.value
+        # 如果key是'checked'，对于checkbox控件返回self.value
+        elif key == 'checked' and self.control_type == 'checkbox':
+            return self.value
+        # 如果key是'option'，对于dropdown控件返回self.value
+        elif key == 'option' and self.control_type == 'dropdown':
+            return self.value
+        # 如果key是'content'，对于inputbox控件返回self.value
+        elif key == 'content' and self.control_type == 'inputbox':
+            return self.value
+        # 其他情况返回None
+        return None

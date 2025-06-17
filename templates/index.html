@@ -881,11 +881,14 @@
 
                         image.src = 'data:image/jpeg;base64,' + contentItem.image;
 
+                        // 添加点击事件监听器
+                        image.addEventListener('click', function() {
+                            socket.emit(image_func, {});
+                        });
+
                         socket.on('update_' + image_id, function(data) {
                             var image_data = data.image;
                             image.src = 'data:image/jpeg;base64,' + image_data;
-                            
-                            socket.emit(image_func, {image: image_data})
                         });
 
                     } else if (contentItem.type === 'accordion') {

@@ -124,7 +124,7 @@ class Tab(BasicControl):
     def add_button(self, 
                    name:      str,
                    text:      str,
-                   callback:  Callable[[dict], None],
+                   callback:  Callable[[BasicControl], None],
                    ) -> None:
         
         control = Button(text, callback)
@@ -136,7 +136,7 @@ class Tab(BasicControl):
     def add_slider(self,
                    name:       str,
                    text:       str,
-                   callback:   Callable[[dict], None],
+                   callback:   Callable[[BasicControl], None],
                    init_value: Union[int, float],
                    min:        Union[int, float],
                    max:        Union[int, float],
@@ -167,7 +167,7 @@ class Tab(BasicControl):
                      text:        str,
                      init_option: str,
                      options:     List[str],
-                     callback:    Callable[[dict], None],
+                     callback:    Callable[[BasicControl], None],
                      ) -> None:
         
         control = Dropdown(text, init_option, options, callback)
@@ -188,7 +188,7 @@ class Tab(BasicControl):
                      name:       str,
                      text:       str,
                      init_value: bool,
-                     callback:   Callable[[dict], None],
+                     callback:   Callable[[BasicControl], None],
                      ) -> None:
 
         control = Checkbox(text, init_value, callback)
@@ -220,7 +220,7 @@ class Tab(BasicControl):
                      label:    str,
                      content:  str,
                      desc:     str,
-                     callback: Callable[[dict], None],
+                     callback: Callable[[BasicControl], None],
                      ):
         control = Inputbox(label, content, desc, callback)
         
@@ -231,7 +231,7 @@ class Tab(BasicControl):
     def add_image(self,
                   name:     str,
                   image:    np.ndarray,
-                  callback: Callable[[dict], None] = None):
+                  callback: Callable[[BasicControl], None] = None):
 
         control = Image(image, callback)
         
