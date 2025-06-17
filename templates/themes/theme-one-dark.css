@@ -3,7 +3,9 @@ body.theme-one-dark {
   --text-color: #abb2bf;
   --accent: #61afef;
   --sidebar-bg: linear-gradient(135deg, #21252b 0%, #282c34 100%);
-  --sidebar-border: #181a1f;
+  --sidebar-header-bg: linear-gradient(135deg, #282c34 0%, #21252b 100%);
+  --border-color: #3e4451;
+  --sidebar-border: #3e4451;
   --sidebar-shadow: rgba(40,44,52,0.3);
   --control-bg: #21252b;
   --control-border: #3a3f4b;

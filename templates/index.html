@@ -9,6 +9,8 @@
             --text-color: #e0e0e0;
             --accent: #00d4aa;
             --sidebar-bg: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            --sidebar-header-bg: linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
+            --border-color: #404040;
             --sidebar-border: #404040;
             --sidebar-shadow: rgba(0, 0, 0, 0.3);
             --control-bg: rgba(255, 255, 255, 0.03);
@@ -83,20 +85,61 @@
         }
         
         #sidebar {
+            width: 300px;
             background: var(--sidebar-bg);
-            color: var(--text-color);
-            width: 320px;
-            height: 100%;
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            padding: 0;
-            box-sizing: border-box;
+            transition: transform 0.3s ease;
+        }
+        
+        #sidebarHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--sidebar-header-bg);
+        }
+        
+        #viewerName {
+            font-weight: bold;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+        
+        #sidebarControls {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        #page {
+            flex: 1;
             overflow-y: auto;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            flex-shrink: 0;
-            border-left: 1px solid var(--sidebar-border);
-            box-shadow: -2px 0 10px var(--sidebar-shadow);
+            padding: 20px 0;
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        body.sidebar-collapsed #sidebar {
+            transform: translateX(100%);
+            position: absolute;
+            right: 0;
+            top: 0;
         }
         
         #sidebar::-webkit-scrollbar {
@@ -114,51 +157,6 @@
         
         #sidebar::-webkit-scrollbar-thumb:hover {
             background: var(--scrollbar-thumb-hover);
-        }
-        
-        body.sidebar-collapsed #sidebar {
-            transform: translateX(100%);
-            position: absolute;
-            right: 0;
-            top: 0;
-        }
-        
-        #info {
-            background: var(--info-bg);
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--info-border);
-            margin-bottom: 12px;
-        }
-        
-        #fps {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--fps-color);
-            text-shadow: var(--fps-shadow);
-        }
-        
-        .page {
-            display: none;
-            padding: 20px;
-        }
-        
-        .page.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        #sidebarControls {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
         }
         
         #pinButton, #collapseButton {
@@ -916,12 +914,12 @@
 <body>
     <div class="container">
         <div id="sidebar">
-            <div id="sidebarControls">
+            <div id="sidebarHeader">
+                <div id="viewerName">Viewer</div>
                 <button id="pinButton" class="active" title="固定侧边栏"><span class="icon">📌</span></button>
-                <button id="collapseButton" title="折叠侧边栏"><span class="icon">◀</span></button>
             </div>
-            <div id="info">
-                <div id="fps">FPS: 0</div>
+            <div id="sidebarControls">
+                <button id="collapseButton" title="折叠侧边栏"><span class="icon">◀</span></button>
             </div>
             <div id="page"></div>
         </div>

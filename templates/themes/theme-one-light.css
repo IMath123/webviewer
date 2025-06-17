@@ -1,9 +1,11 @@
 body.theme-one-light {
   --bg-color: #fafafa;
   --text-color: #383a42;
-  --accent: #0184bc;
-  --sidebar-bg: linear-gradient(135deg, #f3f3f3 0%, #fafafa 100%);
-  --sidebar-border: #e5e5e6;
+  --accent: #4078f2;
+  --sidebar-bg: linear-gradient(135deg, #f0f0f0 0%, #fafafa 100%);
+  --sidebar-header-bg: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  --border-color: #e1e4e8;
+  --sidebar-border: #e1e4e8;
   --sidebar-shadow: rgba(220,220,220,0.15);
   --control-bg: #f3f3f3;
   --control-border: #e5e5e6;
