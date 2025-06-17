@@ -8,7 +8,7 @@ import io
 import threading
 import time
 import hashlib
-from typing import Optional, Union, Callable, List, Dict, Tuple
+from typing import Optional, Union, Callable, List, Dict, Tuple, Any
 from abc import ABC, abstractmethod
 from .controls import *
 from .utils import *
@@ -393,6 +393,36 @@ class Session:
         control = ThemeDropdown(init_option=self.default_theme, callback=callback)
         self.add_control("theme_dropdown", control)
 
+    def add_progress(self, name: str, text: str, callback: Callable[[BasicControl], None], init_value: Union[int, float], min_value: Union[int, float], max_value: Union[int, float], step: Union[int, float]) -> None:
+        """添加进度条控件"""
+        from .controls.progress import Progress
+        control = Progress(text, init_value, min_value, max_value, callback)
+        self.add_control(name, control)
+
+    def add_colorpicker(self, name: str, text: str, callback: Callable[[BasicControl], None], init_color: str = "#000000") -> None:
+        """添加颜色选择器控件"""
+        from .controls.colorpicker import ColorPicker
+        control = ColorPicker(text, init_color, callback)
+        self.add_control(name, control)
+
+    def add_table(self, name: str, text: str, callback: Callable[[BasicControl], None], headers: List[str], data: List[List[str]], selectable: bool = False, sortable: bool = False) -> None:
+        """添加数据表格控件"""
+        from .controls.table import Table
+        control = Table(text, headers, data, callback, sortable, selectable)
+        self.add_control(name, control)
+    
+    def add_container(self,
+                      name: str,
+                      direction: str = "vertical",
+                      gap: str = "10px",
+                      padding: str = "15px",
+                      callback: Optional[Callable[['Container'], None]] = None) -> 'Container':
+        """添加容器控件"""
+        from .controls.container import Container
+        container = Container(direction, gap, padding, callback)
+        self.add_control(name, container)
+        return container
+
 
 class BaseWebViewer(ABC):
     
@@ -507,7 +537,7 @@ class BaseWebViewer(ABC):
     def _init_routes(self, shared_session: bool):
         
         @self._socketio.on('connect')
-        def handle_connect():
+        def handle_connect(auth=None):
             self._connect_num += 1
 
             sid = request.sid

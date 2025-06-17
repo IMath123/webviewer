@@ -1,6 +1,13 @@
 from typing import Any, Callable, Optional, Union, Dict, List
 from flask_socketio import SocketIO
-from . import *
+from .base import BasicControl
+from .button import Button
+from .slider import Slider
+from .dropdown import Dropdown
+from .divider import Divider
+from .checkbox import Checkbox
+from .inputbox import Inputbox
+from .image import Image
 from collections import OrderedDict
 import numpy as np
 import copy
@@ -156,6 +163,7 @@ class Tab(BasicControl):
                  text: str,
                  ) -> None:
         
+        from .text import Text
         control = Text(text)
         
         self.add_control(name, control)
@@ -202,6 +210,7 @@ class Tab(BasicControl):
                       text:     str,
                       expanded: bool = False,
                      ) -> None:
+        from .accordion import Accordion
         control = Accordion(text, expanded)
 
         self.add_control(name, control)
@@ -238,3 +247,77 @@ class Tab(BasicControl):
         self.add_control(name, control)
         
         return self
+
+    def add_progress(self,
+                     name:       str,
+                     text:       str,
+                     callback:   Callable[[BasicControl], None],
+                     init_value: Union[int, float],
+                     min_value:  Union[int, float],
+                     max_value:  Union[int, float],
+                     step:       Union[int, float],
+                     ) -> None:
+        """添加进度条控件"""
+        from .progress import Progress
+        control = Progress(text, init_value, min_value, max_value, callback)
+        
+        self.add_control(name, control)
+        
+        return self
+
+    def add_colorpicker(self,
+                        name:       str,
+                        text:       str,
+                        callback:   Callable[[BasicControl], None],
+                        init_color: str = "#000000",
+                        ) -> None:
+        """添加颜色选择器控件"""
+        from .colorpicker import ColorPicker
+        control = ColorPicker(text, init_color, callback)
+        
+        self.add_control(name, control)
+        
+        return self
+
+    def add_table(self,
+                  name:       str,
+                  text:       str,
+                  callback:   Callable[[BasicControl], None],
+                  headers:    List[str],
+                  data:       List[List[str]],
+                  selectable: bool = False,
+                  sortable:   bool = False,
+                  ) -> None:
+        """添加数据表格控件"""
+        from .table import Table
+        control = Table(text, headers, data, callback, sortable, selectable)
+        
+        self.add_control(name, control)
+        
+        return self
+
+    def add_modal(self,
+                  title: str,
+                  content: str,
+                  callback: Optional[Callable[['Modal'], None]] = None,
+                  buttons: Optional[List[Dict[str, Any]]] = None,
+                  width: str = "500px",
+                  height: str = "auto",
+                  closable: bool = True,
+                  backdrop: bool = True) -> 'Modal':
+        """添加模态对话框控件"""
+        from .modal import Modal
+        modal = Modal(title, content, callback, buttons, width, height, closable, backdrop)
+        self.add_control(modal)
+        return modal
+    
+    def add_container(self,
+                      direction: str = "vertical",
+                      gap: str = "10px",
+                      padding: str = "15px",
+                      callback: Optional[Callable[['Container'], None]] = None) -> 'Container':
+        """添加容器控件"""
+        from .container import Container
+        container = Container(direction, gap, padding, callback)
+        self.add_control(container)
+        return container

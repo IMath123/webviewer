@@ -1,26 +1,34 @@
-from .base import BasicControl
-from .slider import Slider
-from .button import Button
-from .divider import Divider
-from .checkbox import Checkbox
-from .dropdown import Dropdown
-from .text import Text
 from .accordion import Accordion
-from .tab import Tab
-from .inputbox import Inputbox
+from .base import BasicControl
+from .button import Button
+from .checkbox import Checkbox
+from .colorpicker import ColorPicker
+from .container import Container
+from .divider import Divider
+from .dropdown import Dropdown
 from .image import Image
+from .inputbox import Inputbox
+from .progress import Progress
+from .slider import Slider
+from .tab import Tab
+from .table import Table
+from .text import Text
 
 
 __all__ = [
     "BasicControl",
-    "Slider",
-    "Button",
-    "Divider",
-    "Checkbox",
-    "Dropdown",
-    "Text",
     "Accordion",
-    "Tab",
-    "Inputbox",
+    "Button",
+    "Checkbox",
+    "ColorPicker",
+    "Container",
+    "Divider",
+    "Dropdown",
     "Image",
+    "Inputbox",
+    "Progress",
+    "Slider",
+    "Tab",
+    "Table",
+    "Text",
 ]
