@@ -78,6 +78,9 @@ class Session:
 
         # UI锁定标志，防止重复添加控件
         self._ui_locked = False
+        
+        # SocketIO实例，用于与前端通信
+        self._socketio = None
     
     def lock_ui(self):
         """锁定UI，禁止后续添加控件"""
@@ -211,16 +214,19 @@ class Session:
         
         self.use_dynamic_resolution = False
 
-        if width is None and height is None:
+        if width is not None:
             if not isinstance(width, int) or (width <= 0):
                 raise ValueError("Width must be a positive integer")
+            self.image_width = width
             
+        if height is not None:
             if not isinstance(height, int) or (height <= 0):
                 raise ValueError("Height must be a positive integer")
+            self.image_height = height
 
-            if self.image_width != width or self.image_height != height:
-                self.image_width = width
-                self.image_height = height
+        # 调用前端resizeCanvas函数
+        if hasattr(self, '_socketio') and self._socketio is not None:
+            self._socketio.emit('resize_canvas', room=self._sid)
 
     def set_dynamic_resolution(
             self,
@@ -249,6 +255,10 @@ class Session:
             
             self.adjustment_step = adjustment_step
 
+        # 调用前端resizeCanvas函数
+        if hasattr(self, '_socketio') and self._socketio is not None:
+            self._socketio.emit('resize_canvas', room=self._sid)
+
     def is_dynamic_resolution_enabled(self) -> bool:
         """判断是否启用了动态分辨率"""
         return self.use_dynamic_resolution
@@ -267,6 +277,9 @@ class Session:
         return self.force_fix_aspect_ratio
 
     def start(self, socketio, render_func):
+        # 设置SocketIO实例
+        self._socketio = socketio
+        
         render_time = 0
 
         # wait for canvas init

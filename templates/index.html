@@ -82,15 +82,84 @@
             flex: 1;
             background: var(--canvas-bg);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0;
+            padding: 0;
+            border: none;
+            outline: none;
         }
         
         #sidebar {
             width: 300px;
+            min-width: 200px;
+            max-width: 600px;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            flex-basis: 300px;
+        }
+        
+        #resizeHandle {
+            width: 12px; /* 与控件margin一致 */
+            height: 100%;
+            background: transparent;
+            cursor: col-resize;
+            position: absolute;
+            left: 0; /* 手柄左边缘对齐侧边栏左边 */
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.2s ease;
+            pointer-events: auto;
+            touch-action: none; /* 防止触摸滚动 */
+        }
+        
+        #resizeHandle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        #resizeHandle::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
+        }
+        
+        #resizeHandle:hover::before {
+            background: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* 亮色主题下的手柄样式 */
+        .theme-github-light #resizeHandle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-github-light #resizeHandle::before {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .theme-github-light #resizeHandle:hover::before {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        .theme-one-light #resizeHandle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-one-light #resizeHandle::before {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .theme-one-light #resizeHandle:hover::before {
+            background: rgba(0, 0, 0, 0.6);
         }
         
         #sidebarHeader {
@@ -690,6 +759,56 @@
             align-items: stretch;
         }
         
+        /* 垂直容器内控件的紧凑样式 */
+        .container-vertical .control-group {
+            margin: 0 0 4px 0;  /* 减少底部间距 */
+            padding: 4px;       /* 减少内边距 */
+        }
+        
+        .container-vertical .control-label {
+            font-size: 11px;    /* 稍微减小字体 */
+            margin-bottom: 2px; /* 减少标签底部间距 */
+        }
+        
+        .container-vertical .control-button {
+            padding: 6px 8px;   /* 减少按钮内边距 */
+            margin-bottom: 2px; /* 减少按钮底部间距 */
+            font-size: 12px;    /* 稍微减小字体 */
+        }
+        
+        .container-vertical .control-text {
+            padding: 2px 0;     /* 减少文本内边距 */
+            font-size: 12px;    /* 稍微减小字体 */
+        }
+        
+        .container-vertical .control-dropdown {
+            padding: 4px 6px;   /* 减少下拉框内边距 */
+            font-size: 12px;    /* 稍微减小字体 */
+        }
+        
+        .container-vertical .control-inputbox {
+            padding: 4px 6px;   /* 减少输入框内边距 */
+            font-size: 12px;    /* 稍微减小字体 */
+        }
+        
+        .container-vertical .checkbox-container {
+            gap: 6px;           /* 减少复选框间距 */
+            padding: 1px 0;     /* 减少内边距 */
+        }
+        
+        .container-vertical .slider-container {
+            gap: 4px;           /* 减少滑块容器间距 */
+        }
+        
+        .container-vertical .slider-header {
+            gap: 4px;           /* 减少滑块头部间距 */
+        }
+        
+        .container-vertical .inputbox-desc {
+            font-size: 10px;    /* 减少描述文字大小 */
+            margin-top: 1px;    /* 减少顶部间距 */
+        }
+        
         .container-horizontal {
             display: flex;
             flex-direction: row;
@@ -726,7 +845,8 @@
         }
         
         .container-horizontal .control-group:has(.control-checkbox) {
-            min-width: 45px;
+            min-width: 60px;
+            max-width: 120px;
         }
         
         .container-horizontal .control-group:has(.control-text) {
@@ -735,9 +855,11 @@
         
         /* 控件样式优化 */
         .container-horizontal .control-label {
-            font-size: 9px;
-            margin-bottom: 1px;
-            line-height: 1.1;
+            font-size: 10px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .container-horizontal .control-button {
@@ -796,13 +918,23 @@
         }
         
         .container-horizontal .checkbox-container {
-            gap: 3px;
+            gap: 2px;
             padding: 0;
+            justify-content: flex-start;
         }
         
         .container-horizontal .control-checkbox {
             width: 12px;
             height: 12px;
+            margin: 0;
+        }
+        
+        .container-horizontal .control-label {
+            font-size: 10px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .container-horizontal .inputbox-desc {
@@ -914,6 +1046,7 @@
 <body>
     <div class="container">
         <div id="sidebar">
+            <div id="resizeHandle" title="拖拽调整宽度"></div>
             <div id="sidebarHeader">
                 <div id="viewerName">Viewer</div>
                 <button id="pinButton" class="active" title="固定侧边栏"><span class="icon">📌</span></button>
@@ -931,7 +1064,6 @@
         var socket = io();
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
-        var fpsDisplay = document.getElementById('fps');
         var imageWidth = 1024;
         var imageHeight = 1024;
         var currentImage = null;
@@ -944,7 +1076,10 @@
         const expandButton = document.getElementById('expandButton');
         const collapseButton = document.getElementById('collapseButton');
         const pinButton = document.getElementById('pinButton');
+        const resizeHandle = document.getElementById('resizeHandle');
         let sidebarPinned = true;
+        let isResizing = false;
+        let startX, startWidth;
 
         // 处理侧边栏折叠和展开
         document.getElementById('collapseButton').addEventListener('click', function() {
@@ -980,10 +1115,97 @@
             }
         });
 
+        // 直接在resizeHandle上添加触摸事件
+        resizeHandle.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            isResizing = true;
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+            
+            // 禁用过渡效果
+            sidebar.style.transition = 'none';
+            
+            document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+            document.addEventListener('touchend', handleTouchEnd, { capture: true });
+        }, { passive: false });
+
+        // 为resizeHandle添加鼠标事件
+        resizeHandle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+            
+            // 禁用过渡效果
+            sidebar.style.transition = 'none';
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            
+            e.preventDefault();
+            const deltaX = startX - e.clientX;
+            const newWidth = startWidth + deltaX;
+            const minWidth = 200;
+            const maxWidth = 600;
+            
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                sidebar.style.flexBasis = newWidth + 'px';
+                sidebar.style.width = newWidth + 'px';
+                resizeCanvas(true);
+            }
+        }
+
+        function handleMouseUp(e) {
+            isResizing = false;
+            
+            // 恢复过渡效果
+            sidebar.style.transition = 'transform 0.3s ease';
+            
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleTouchMove(e) {
+            if (!isResizing) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            const deltaX = startX - touch.clientX;
+            const newWidth = startWidth + deltaX;
+            const minWidth = 200;
+            const maxWidth = 600;
+            
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                sidebar.style.flexBasis = newWidth + 'px';
+                sidebar.style.width = newWidth + 'px';
+                resizeCanvas(true);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            isResizing = false;
+            
+            // 恢复过渡效果
+            sidebar.style.transition = 'transform 0.3s ease';
+            
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+        }
+
         function resizeCanvas(send_to_backend) {
+            const sidebarWidth = sidebar.offsetWidth;
             canvas.width = document.body.classList.contains('sidebar-collapsed') ? 
                 window.innerWidth : 
-                window.innerWidth - sidebar.offsetWidth;
+                window.innerWidth - sidebarWidth;
             canvas.height = window.innerHeight;
             var aspectRatio = canvas.height / canvas.width;
 
@@ -1056,7 +1278,12 @@
         });
 
         canvas.addEventListener('touchstart', function(event) {
-            socket.emit('on_left_mouse_press'); 
+            // 检查触摸是否在canvas区域内，避免与resizeHandle冲突
+            const rect = canvas.getBoundingClientRect();
+            const touch = event.touches[0];
+            if (touch.clientX >= rect.left && touch.clientY >= rect.top) {
+                socket.emit('on_left_mouse_press'); 
+            }
         });
 
         canvas.addEventListener('touchend', function(event) {
@@ -1068,8 +1295,12 @@
         });
 
         canvas.addEventListener('touchmove', function(event) {
+            // 检查触摸是否在canvas区域内
+            const rect = canvas.getBoundingClientRect();
             const touch = event.touches[0];
-            updatePosition(touch.clientX, touch.clientY);
+            if (touch.clientX >= rect.left && touch.clientY >= rect.top) {
+                updatePosition(touch.clientX, touch.clientY);
+            }
         });
 
         socket.on('draw_response', function(data) {
@@ -1088,7 +1319,7 @@
                 var elapsed = now - lastFrameTime;
                 if (elapsed >= 1000) {
                     var fps = (frameCount / elapsed) * 1000;
-                    fpsDisplay.textContent = `FPS: ${fps.toFixed(1)}`;
+                    // fpsDisplay.textContent = `FPS: ${fps.toFixed(1)}`;
                     frameCount = 0;
                     lastFrameTime = now;
                 }
@@ -1117,6 +1348,10 @@
 
         socket.on('disconnect', function() {
             console.log('WebSocket disconnected');
+        });
+
+        socket.on('resize_canvas', function() {
+            resizeCanvas(true);
         });
 
         socket.on('render_controls', function(data) {

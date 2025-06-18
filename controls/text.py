@@ -37,5 +37,4 @@ class Text(BasicControl):
         if text is not None:
             self.text = text
             # 更新HTML内容，将\n转换为<br>标签
-            formatted_text = self.text.replace('\n', '<br>')
-            self._update_html_content(formatted_text)
+            self.text = self.text.replace('\n', '<br>')
