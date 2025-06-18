@@ -696,6 +696,17 @@ class BaseWebViewer(ABC):
 
             self.on_mouse_move(session)
 
+        # ListBox控件事件分发
+        for name, control in self._controls.items():
+            if hasattr(control, 'TYPE') and getattr(control, 'TYPE', None) == 'listbox':
+                @self._socketio.on(name)
+                def handle_listbox_event(data, name=name, control=control):
+                    selected = data.get('selected', [])
+                    control.update(selected=selected)
+                    if control.callback:
+                        control.callback(control)
+                    self._send_update(name, {'selected': control.selected})
+
     def set_default_theme(self, theme: str):
         """设置默认主题"""
         # 检查themes目录

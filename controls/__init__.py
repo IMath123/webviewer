@@ -13,6 +13,7 @@ from .slider import Slider
 from .tab import Tab
 from .table import Table
 from .text import Text
+from .listbox import ListBox
 
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "Tab",
     "Table",
     "Text",
+    "ListBox",
 ]
