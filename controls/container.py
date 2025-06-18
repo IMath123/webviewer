@@ -137,12 +137,18 @@ class Container(BasicControl):
         self.add_control(name, slider)
         return self
     
-    def add_text(self, 
-                 name: str,
-                 text: str) -> 'Container':
-        """添加文本控件"""
+    def add_text(self, name: str, text: str, wrap: bool = True, max_lines: Optional[int] = None, show_line_numbers: bool = False, color: Optional[str] = None) -> 'Container':
+        """
+        添加文本控件
+        :param name: 控件名称
+        :param text: 文本内容
+        :param wrap: 是否自动换行
+        :param max_lines: 最大显示行数
+        :param show_line_numbers: 是否显示行号
+        :param color: 字体颜色
+        """
         from .text import Text
-        text_control = Text(text)
+        text_control = Text(text, wrap=wrap, max_lines=max_lines, show_line_numbers=show_line_numbers, color=color)
         self.add_control(name, text_control)
         return self
     

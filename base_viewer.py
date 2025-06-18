@@ -366,8 +366,40 @@ class Session:
         control = Slider(text, callback, init_value, min, max, step)
         self.add_control(name, control)
 
-    def add_text(self, name: str, text: str) -> None:
-        control = Text(text)
+    def add_text(self, name: str, text: str, 
+                 wrap: bool = True, 
+                 max_lines: Optional[int] = None, 
+                 show_line_numbers: bool = False, 
+                 color: Optional[str] = None,
+                 align: Optional[str] = None,
+                 font_size: Optional[str] = None,
+                 bold: bool = False,
+                 italic: bool = False,
+                 underline: bool = False,
+                 shadow: Optional[str] = None,
+                 line_height: Optional[str] = None
+                 ) -> None:
+        """
+        添加文本控件
+        :param name: 控件名称
+        :param text: 文本内容
+        :param wrap: 是否自动换行
+        :param max_lines: 最大显示行数
+        :param show_line_numbers: 是否显示行号
+        :param color: 字体颜色
+        :param align: 对齐方式
+        :param font_size: 字体大小
+        :param bold: 是否加粗
+        :param italic: 是否斜体
+        :param underline: 是否下划线
+        :param shadow: 文本阴影
+        :param line_height: 行高
+        """
+        from .controls.text import Text
+        control = Text(
+            text, wrap=wrap, max_lines=max_lines, show_line_numbers=show_line_numbers, color=color,
+            align=align, font_size=font_size, bold=bold, italic=italic, underline=underline, shadow=shadow, line_height=line_height
+        )
         self.add_control(name, control)
 
     def add_dropdown(self, name: str, text: str, init_option: str, options: List[str], callback: Callable[[BasicControl], None]) -> None:

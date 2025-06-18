@@ -158,16 +158,19 @@ class Tab(BasicControl):
         
         return self
 
-    def add_text(self, 
-                 name: str,
-                 text: str,
-                 ) -> None:
-        
+    def add_text(self, name: str, text: str, wrap: bool = True, max_lines: Optional[int] = None, show_line_numbers: bool = False, color: Optional[str] = None) -> None:
+        """
+        添加文本控件
+        :param name: 控件名称
+        :param text: 文本内容
+        :param wrap: 是否自动换行
+        :param max_lines: 最大显示行数
+        :param show_line_numbers: 是否显示行号
+        :param color: 字体颜色
+        """
         from .text import Text
-        control = Text(text)
-        
+        control = Text(text, wrap=wrap, max_lines=max_lines, show_line_numbers=show_line_numbers, color=color)
         self.add_control(name, control)
-        
         return self
 
     def add_dropdown(self,
