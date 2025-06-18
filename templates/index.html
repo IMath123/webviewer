@@ -1480,7 +1480,8 @@
                         });
                         socket.on('update_' + button_id, function(data) {
                             var value = data.text;
-                            button.textContent = value;
+                            var button = document.getElementById(button_id);
+                            if (button) button.textContent = value;
                             socket.emit(button_func, {});
                         });
                     }
@@ -1580,24 +1581,22 @@
                         var text_id = contentItem.id;
                         var text = document.getElementById(text_id);
                         var text_value = contentItem.text;
-
-                        text.innerHTML = text_value;
+                        if (text) text.innerHTML = text_value;
                         socket.on('update_' + text_id, function(data) {
                             var value = data.text;
-                            text.innerHTML = value;
+                            var text = document.getElementById(text_id);
+                            if (text) text.innerHTML = value;
                         });
-
                     } else if (contentItem.type === 'dropdown') {
                         var dropdown_id = contentItem.id;
                         var dropdown = document.getElementById(dropdown_id);
                         var dropdown_value = contentItem.option
                         var dropdown_func = contentItem.id;
 
-                        dropdown.value = dropdown_value
+                        if (dropdown) dropdown.value = dropdown_value
 
-                        dropdown.addEventListener('change', function() {
+                        if (dropdown) dropdown.addEventListener('change', function() {
                             var value = dropdown.value;
-                            // 主题切换专用
                             if(dropdown_id === 'theme_dropdown') {
                                 setTheme('theme-' + value);
                             }
@@ -1606,45 +1605,47 @@
                         
                         socket.on('update_' + dropdown_id, function(data) {
                             var option = data.option;
-                            dropdown.value = option;
-                            // 主题切换专用
-                            if(dropdown_id === 'theme_dropdown') {
-                                setTheme('theme-' + option);
+                            var dropdown = document.getElementById(dropdown_id);
+                            if (dropdown) {
+                                dropdown.value = option;
+                                if(dropdown_id === 'theme_dropdown') {
+                                    setTheme('theme-' + option);
+                                }
                             }
                         });
-                        
                     } else if (contentItem.type === 'checkbox') {
                         var checkbox_id = contentItem.id;
                         var checkbox = document.getElementById(checkbox_id);
                         var checkbox_func = contentItem.id;
                         var checkbox_value = contentItem.checked
 
-                        checkbox.checked = checkbox_value === 'true'
+                        if (checkbox) checkbox.checked = checkbox_value === 'true'
                         
-                        checkbox.addEventListener('change', function() {
+                        if (checkbox) checkbox.addEventListener('change', function() {
                             var value = checkbox.checked;
                             socket.emit(checkbox_func, {checked: value})
                          });
                         socket.on('update_' + checkbox_id, function(data) {
                             var checked = data.checked;
-                            checkbox.checked = checked === 'true'
-                            socket.emit(checkbox_func, {checked: checkbox.checked})
+                            var checkbox = document.getElementById(checkbox_id);
+                            if (checkbox) checkbox.checked = checked === 'true'
+                            socket.emit(checkbox_func, {checked: checkbox && checkbox.checked})
                         });
                     } else if (contentItem.type == "image") {
                         var image_id = contentItem.id;
                         const image = document.getElementById(image_id);
                         var image_func = contentItem.id;
 
-                        image.src = 'data:image/jpeg;base64,' + contentItem.image;
+                        if (image) image.src = 'data:image/jpeg;base64,' + contentItem.image;
 
-                        // 添加点击事件监听器
-                        image.addEventListener('click', function() {
+                        if (image) image.addEventListener('click', function() {
                             socket.emit(image_func, {});
                         });
 
                         socket.on('update_' + image_id, function(data) {
                             var image_data = data.image;
-                            image.src = 'data:image/jpeg;base64,' + image_data;
+                            var image = document.getElementById(image_id);
+                            if (image) image.src = 'data:image/jpeg;base64,' + image_data;
                         });
 
                     } else if (contentItem.type === 'accordion') {
@@ -1733,21 +1734,25 @@
                         var progress_min = contentItem.min_value;
                         var progress_max = contentItem.max_value;
 
-                        // 更新进度条显示
-                        const progressFill = progressContainer.querySelector('.progress-fill');
-                        const progressText = progressContainer.querySelector('.progress-text');
-                        const percentage = ((progress_value - progress_min) / (progress_max - progress_min)) * 100;
-                        
-                        progressFill.style.width = percentage + '%';
-                        progressText.textContent = progress_value + '/' + progress_max + ' (' + percentage.toFixed(1) + '%)';
+                        if (progressContainer) {
+                            const progressFill = progressContainer.querySelector('.progress-fill');
+                            const progressText = progressContainer.querySelector('.progress-text');
+                            const percentage = ((progress_value - progress_min) / (progress_max - progress_min)) * 100;
+                            progressFill.style.width = percentage + '%';
+                            progressText.textContent = progress_value + '/' + progress_max + ' (' + percentage.toFixed(1) + '%)';
+                        }
 
                         socket.on('update_' + progress_id, function(data) {
                             var value = data.value;
-                            const percentage = ((value - progress_min) / (progress_max - progress_min)) * 100;
-                            progressFill.style.width = percentage + '%';
-                            progressText.textContent = value + '/' + progress_max + ' (' + percentage.toFixed(1) + '%)';
+                            var progressContainer = document.getElementById(progress_id);
+                            if (progressContainer) {
+                                const progressFill = progressContainer.querySelector('.progress-fill');
+                                const progressText = progressContainer.querySelector('.progress-text');
+                                const percentage = ((value - progress_min) / (progress_max - progress_min)) * 100;
+                                progressFill.style.width = percentage + '%';
+                                progressText.textContent = value + '/' + progress_max + ' (' + percentage.toFixed(1) + '%)';
+                            }
                         });
-
                     } else if (contentItem.type === 'colorpicker') {
                         var colorpicker_id = contentItem.id;
                         const colorpicker = document.getElementById(colorpicker_id);
@@ -1984,6 +1989,7 @@
 
         // 主题切换逻辑
         function setTheme(theme) {
+            console.log('setTheme', theme);
             // 移除所有可能的主题类
             document.body.classList.remove(
                 'theme-one-dark', 'theme-one-light',
