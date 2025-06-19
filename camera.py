@@ -26,6 +26,19 @@ class Camera:
             self.pose = np.eye(4, dtype=np.float32)
         else:
             self.pose = pose.astype(np.float32)
+    
+    def resize(self, width: int, height: int) -> 'Camera':
+        new_width = int(width)
+        new_height = int(height)
+        if new_width <= 0 or new_height <= 0:
+            raise ValueError("width and height must be positive integers")
+
+        scale = min(new_width / self.width, new_height / self.height)
+        fx = self.fx * scale
+        fy = self.fy * scale
+        cx = self.cx * scale
+        cy = self.cy * scale
+        return Camera(fx, fy, cx, cy, new_width, new_height, pose=self.pose)
 
     def set_pose(self, pose: np.ndarray, world_to_camera: bool = True, coord_type: str = "opencv"):
         assert pose.shape == (4, 4)

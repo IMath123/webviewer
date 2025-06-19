@@ -498,31 +498,53 @@ class Session:
         self.add_control(name, container)
         return container
 
-    def enable_camera(self, fx: float, fy: float, cx: float, cy: float, 
-                     width: int, height: int, 
-                     pose: Optional[np.ndarray] = None):
+    def enable_camera(self, 
+                      width: int, height: int, 
+                      *,
+                      intrinsics: Optional[np.ndarray] = None,
+                      fx: Optional[float] = None, fy: Optional[float] = None,
+                      cx: Optional[float] = None, cy: Optional[float] = None, 
+                      pose: Optional[np.ndarray] = None):
         """启用相机功能，必须提供内参，外参可选"""
-        # 验证焦距参数 - 使用更宽松的类型判断
         try:
-            fx = float(fx)
-            fy = float(fy)
-            cx = float(cx)
-            cy = float(cy)
             width = int(width)
             height = int(height)
+            if width <= 0 or height <= 0:
+                raise ValueError("width and height must be positive integers")
         except (TypeError, ValueError):
-            raise TypeError("fx, fy, cx, cy must be convertible to numbers; width, height must be convertible to integers")
+            raise TypeError("width and height must be convertible to integers")
         
-        if fx <= 0 or fy <= 0:
-            raise ValueError("fx and fy must be positive numbers")
-        if width <= 0 or height <= 0:
-            raise ValueError("width and height must be positive integers")
-        
-        # 验证主点是否在图像范围内
-        if cx < 0 or cx >= width:
-            raise ValueError(f"cx ({cx}) must be in range [0, {width})")
-        if cy < 0 or cy >= height:
-            raise ValueError(f"cy ({cy}) must be in range [0, {height})")
+        if intrinsics is not None:
+            # 验证焦距参数 - 使用更宽松的类型判断
+            try:
+                fx = float(fx)
+                fy = float(fy)
+                cx = float(cx)
+                cy = float(cy)
+            except (TypeError, ValueError):
+                raise TypeError("fx, fy, cx, cy must be convertible to numbers; width, height must be convertible to integers")
+            
+            if fx <= 0 or fy <= 0:
+                raise ValueError("fx and fy must be positive numbers")
+            
+            # 验证主点是否在图像范围内
+            if cx < 0 or cx >= width:
+                raise ValueError(f"cx ({cx}) must be in range [0, {width})")
+            if cy < 0 or cy >= height:
+                raise ValueError(f"cy ({cy}) must be in range [0, {height})")
+        else:
+            # 验证内参矩阵
+            if not isinstance(intrinsics, np.ndarray):
+                raise TypeError("intrinsics must be a numpy array")
+            if intrinsics.shape != (3, 3):
+                raise ValueError("intrinsics must be a 3x3 matrix")
+            if intrinsics.dtype != np.float32:
+                intrinsics = intrinsics.astype(np.float32)
+
+            fx = intrinsics[0, 0]
+            fy = intrinsics[1, 1]
+            cx = intrinsics[0, 2]
+            cy = intrinsics[1, 2]
         
         # 验证外参矩阵
         if pose is not None:
