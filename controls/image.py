@@ -33,8 +33,18 @@ class Image(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
+        # 参数校验
         if init_image is not None:
-            self.image  = image_to_data(init_image)
+            if not isinstance(init_image, np.ndarray):
+                raise TypeError("init_image must be a numpy array")
+            if init_image.ndim not in [2, 3]:
+                raise ValueError("init_image must be 2D (grayscale) or 3D (color)")
+            if init_image.ndim == 3 and init_image.shape[2] not in [1, 3, 4]:
+                raise ValueError("color image must have 1 (grayscale), 3 (RGB), or 4 (RGBA) channels")
+            if init_image.shape[0] <= 0 or init_image.shape[1] <= 0:
+                raise ValueError("init_image dimensions must be positive")
+            
+            self.image = image_to_data(init_image)
         else:
             self.image = None
         

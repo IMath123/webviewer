@@ -16,21 +16,28 @@ class Progress(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        
+        # 验证数值参数 - 使用更宽松的类型判断
+        try:
+            init_value = float(init_value)
+            min_val = float(min_value)
+            max_val = float(max_value)
+        except (TypeError, ValueError):
+            raise TypeError("init_value, min_value, max_value must be convertible to numbers")
+        
+        # 验证数值范围
+        if min_val >= max_val:
+            raise ValueError("min_value must be less than max_value")
+        if init_value < min_val or init_value > max_val:
+            raise ValueError(f"init_value ({init_value}) must be between min_value ({min_val}) and max_value ({max_val})")
+        
         self.text     = text
         self.value    = init_value
-        self.min_value = min_value
-        self.max_value = max_value
-        
-        if not isinstance(init_value, (int, float)):
-            raise TypeError("init_value must be a number")
-        if not isinstance(min_value, (int, float)):
-            raise TypeError("min_value must be a number")
-        if not isinstance(max_value, (int, float)):
-            raise TypeError("max_value must be a number")
-        if min_value >= max_value:
-            raise ValueError("min_value must be less than max_value")
-        if init_value < min_value or init_value > max_value:
-            raise ValueError("init_value must be between min_value and max_value")
+        self.min_value = min_val
+        self.max_value = max_val
         
     def get_html(self) -> str:
         percentage = ((self.value - self.min_value) / (self.max_value - self.min_value)) * 100

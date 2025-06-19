@@ -16,12 +16,23 @@ class Dropdown(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        if not isinstance(init_option, str):
+            raise TypeError("init_option must be a string")
+        if not isinstance(options, list):
+            raise TypeError("options must be a list")
+        if not options:
+            raise ValueError("options cannot be empty")
+        if not all(isinstance(option, str) for option in options):
+            raise TypeError("all options must be strings")
+        if init_option not in options:
+            raise ValueError(f"init_option '{init_option}' must be one of the available options: {options}")
+        
         self.text    = text
         self.option  = init_option
         self.options = options
-        
-        if self.option not in self.options:
-            raise ValueError("init_option must be in options")
         
     def get_html(self) -> str:
         dropdown_html = f'''

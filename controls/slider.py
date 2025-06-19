@@ -17,11 +17,32 @@ class Slider(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        
+        # 验证数值参数 - 使用更宽松的类型判断
+        try:
+            init_value = float(init_value)
+            min_val = float(min)
+            max_val = float(max)
+            step_val = float(step)
+        except (TypeError, ValueError):
+            raise TypeError("init_value, min, max, step must be convertible to numbers")
+        
+        # 验证数值范围
+        if min_val >= max_val:
+            raise ValueError("min must be less than max")
+        if step_val <= 0:
+            raise ValueError("step must be positive")
+        if init_value < min_val or init_value > max_val:
+            raise ValueError(f"init_value ({init_value}) must be between min ({min_val}) and max ({max_val})")
+        
         self.text  = text
         self.value = init_value
-        self.min   = min
-        self.max   = max
-        self.step  = step
+        self.min   = min_val
+        self.max   = max_val
+        self.step  = step_val
         
         self.dtype = float if isinstance(self.value, float) or isinstance(self.min, float) or isinstance(self.max, float) or isinstance(self.step, float) else int
         

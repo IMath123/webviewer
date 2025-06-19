@@ -14,6 +14,7 @@ from .controls import *
 from .utils import *
 import uuid
 import os
+from .camera import Camera
 
 
 class Session:
@@ -81,6 +82,24 @@ class Session:
         
         # SocketIO实例，用于与前端通信
         self._socketio = None
+        
+        # 鼠标轨道球交互状态
+        self._camera_orbit_dragging = False
+        self._camera_last_x = 0
+        self._camera_last_y = 0
+        # 鼠标右键平移交互状态
+        self._camera_pan_dragging = False
+        self._camera_pan_last_x = 0
+        self._camera_pan_last_y = 0
+        # 相机（可选）
+        self.camera = None
+        # 相机交互控制系数
+        self._orbit_sensitivity = 0.01
+        self._pan_sensitivity = 0.01
+        self._zoom_sensitivity = 0.01
+    
+    def get_socketio(self):
+        return self._socketio
     
     def lock_ui(self):
         """锁定UI，禁止后续添加控件"""
@@ -287,10 +306,8 @@ class Session:
             if self.image_width is not None and self.image_height is not None:
                 break
             else:
-                time.sleep(0.2)
+                time.sleep(0.1)
 
-        print("init succeed!")
-        
         while True:
             frame_start_time = time.time()
             
@@ -363,6 +380,8 @@ class Session:
         self.add_control(name, control)
 
     def add_slider(self, name: str, text: str, callback: Callable[[BasicControl], None], init_value: Union[int, float], min: Union[int, float], max: Union[int, float], step: Union[int, float]) -> None:
+        """添加滑块控件"""
+        from .controls.slider import Slider
         control = Slider(text, callback, init_value, min, max, step)
         self.add_control(name, control)
 
@@ -379,22 +398,7 @@ class Session:
                  shadow: Optional[str] = None,
                  line_height: Optional[str] = None
                  ) -> None:
-        """
-        添加文本控件
-        :param name: 控件名称
-        :param text: 文本内容
-        :param wrap: 是否自动换行
-        :param max_lines: 最大显示行数
-        :param show_line_numbers: 是否显示行号
-        :param color: 字体颜色
-        :param align: 对齐方式
-        :param font_size: 字体大小
-        :param bold: 是否加粗
-        :param italic: 是否斜体
-        :param underline: 是否下划线
-        :param shadow: 文本阴影
-        :param line_height: 行高
-        """
+        """添加文本控件"""
         from .controls.text import Text
         control = Text(
             text, wrap=wrap, max_lines=max_lines, show_line_numbers=show_line_numbers, color=color,
@@ -403,6 +407,8 @@ class Session:
         self.add_control(name, control)
 
     def add_dropdown(self, name: str, text: str, init_option: str, options: List[str], callback: Callable[[BasicControl], None]) -> None:
+        """添加下拉选择控件"""
+        from .controls.dropdown import Dropdown
         control = Dropdown(text, init_option, options, callback)
         self.add_control(name, control)
 
@@ -429,6 +435,8 @@ class Session:
         self.add_control(name, control)
 
     def add_image(self, name: str, image: np.ndarray, callback: Callable[[BasicControl], None] = None):
+        """添加图像控件"""
+        from .controls.image import Image
         control = Image(image, callback)
         self.add_control(name, control)
 
@@ -463,10 +471,117 @@ class Session:
                       padding: str = "15px",
                       callback: Optional[Callable[['Container'], None]] = None) -> 'Container':
         """添加容器控件"""
+        # 验证direction参数
+        if not isinstance(direction, str):
+            raise TypeError("direction must be a string")
+        if direction not in ["vertical", "horizontal"]:
+            raise ValueError("direction must be either 'vertical' or 'horizontal'")
+        
+        # 验证gap参数
+        if not isinstance(gap, str):
+            raise TypeError("gap must be a string")
+        if not gap.strip():
+            raise ValueError("gap cannot be empty")
+        
+        # 验证padding参数
+        if not isinstance(padding, str):
+            raise TypeError("padding must be a string")
+        if not padding.strip():
+            raise ValueError("padding cannot be empty")
+        
+        # 验证callback参数
+        if callback is not None and not callable(callback):
+            raise TypeError("callback must be callable or None")
+        
         from .controls.container import Container
         container = Container(direction, gap, padding, callback)
         self.add_control(name, container)
         return container
+
+    def enable_camera(self, fx: float, fy: float, cx: float, cy: float, 
+                     width: int, height: int, 
+                     pose: Optional[np.ndarray] = None):
+        """启用相机功能，必须提供内参，外参可选"""
+        # 验证焦距参数 - 使用更宽松的类型判断
+        try:
+            fx = float(fx)
+            fy = float(fy)
+            cx = float(cx)
+            cy = float(cy)
+            width = int(width)
+            height = int(height)
+        except (TypeError, ValueError):
+            raise TypeError("fx, fy, cx, cy must be convertible to numbers; width, height must be convertible to integers")
+        
+        if fx <= 0 or fy <= 0:
+            raise ValueError("fx and fy must be positive numbers")
+        if width <= 0 or height <= 0:
+            raise ValueError("width and height must be positive integers")
+        
+        # 验证主点是否在图像范围内
+        if cx < 0 or cx >= width:
+            raise ValueError(f"cx ({cx}) must be in range [0, {width})")
+        if cy < 0 or cy >= height:
+            raise ValueError(f"cy ({cy}) must be in range [0, {height})")
+        
+        # 验证外参矩阵
+        if pose is not None:
+            if not isinstance(pose, np.ndarray):
+                raise TypeError("pose must be a numpy array")
+            if pose.shape != (4, 4):
+                raise ValueError("pose must be a 4x4 matrix")
+            if pose.dtype != np.float32:
+                pose = pose.astype(np.float32)
+        else:
+            pose = np.eye(4, dtype=np.float32)
+        
+        from .camera import Camera
+        self.camera = Camera(fx, fy, cx, cy, width, height, pose)
+
+    def _on_mouse_move(self):
+        """内部鼠标移动处理逻辑"""
+        if self.camera is None:
+            return
+        # 处理轨道球旋转
+        if self._camera_orbit_dragging:
+            x, y = self.get_cursor_position()
+            dx = x - self._camera_last_x
+            dy = y - self._camera_last_y
+            self._camera_last_x = x
+            self._camera_last_y = y
+            yaw = dx * self._orbit_sensitivity
+            pitch = dy * self._orbit_sensitivity
+            self.camera.rotate(yaw, pitch)
+        
+        # 处理右键平移
+        if self._camera_pan_dragging:
+            x, y = self.get_cursor_position()
+            dx = x - self._camera_pan_last_x
+            dy = y - self._camera_pan_last_y
+            self._camera_pan_last_x = x
+            self._camera_pan_last_y = y
+            
+            # 相机在自身坐标系 x-y 平面内平移
+            step_x = -dx * self._pan_sensitivity
+            step_y = dy * self._pan_sensitivity
+            pose = self.camera.get_pose(world_to_camera=False)
+            R = pose[:3, :3]
+            right = R[:3, 0]  # 相机右方向
+            up = -R[:3, 1]     # 相机上方向
+            pose[:3, 3] += right * step_x + up * step_y
+            self.camera.set_pose(pose, world_to_camera=False)
+
+    def _on_mouse_wheel(self, delta):
+        """内部鼠标滚轮处理逻辑"""
+        if self.camera is None:
+            return
+        # 鼠标滚轮控制缩放：相机沿自身坐标系 -z 方向（视线方向）平移
+        step = -float(delta) * self._zoom_sensitivity
+        pose = self.camera.get_pose(world_to_camera=False)
+        R = pose[:3, :3]
+        forward = R[:3, 2]
+        pose[:3, 3] += forward * step
+        self.camera.set_pose(pose, world_to_camera=False)
 
 
 class BaseWebViewer(ABC):
@@ -514,24 +629,37 @@ class BaseWebViewer(ABC):
         pass
     
     def on_left_mouse_press(self, session: Session):
-        pass
+        if session.camera is None:
+            return
+        session._camera_orbit_dragging = True
+        session._camera_last_x, session._camera_last_y = session.get_cursor_position()
 
-    def on_left_mouse_release(self, session: Session):
-        pass
-    
-    def on_right_mouse_press(self, session: Session):
-        pass
-
-    def on_right_mouse_release(self, session: Session):
-        pass
-    
     def on_mouse_move(self, session: Session):
         pass
-    
+        
+    def on_left_mouse_release(self, session: Session):
+        if session.camera is None:
+            return
+        if session._camera_orbit_dragging:
+            session._camera_orbit_dragging = False
+
+    def on_right_mouse_press(self, session: Session):
+        if session.camera is None:
+            return
+        # 记录右键拖动起点
+        session._camera_pan_dragging = True
+        session._camera_pan_last_x, session._camera_pan_last_y = session.get_cursor_position()
+
+    def on_right_mouse_release(self, session: Session):
+        if session.camera is None:
+            return
+        if session._camera_pan_dragging:
+            session._camera_pan_dragging = False
+
     def on_mouse_wheel(self, session: Session, delta):
+        """处理鼠标滚轮事件，用户可以重写此方法"""
         pass
-    
-    
+
     def render(self, image_width: int, image_height: int, session: Session, **kwargs) -> np.ndarray:
         raise NotImplementedError("Subclasses must implement this method")  
     
@@ -567,16 +695,10 @@ class BaseWebViewer(ABC):
     
     def _new_default_session(self, sid):
         return Session(
-            width                  = self.image_width,
-            height                 = self.image_height,
-            sid                    = sid,
-            default_theme          = self._default_theme,
-            # force_fix_aspect_ratio = self._force_fix_aspect_ratio,
-            # use_dynamic_resolution = self._use_dynamic_resolution,
-            # target_frame_rate      = self._target_fps,
-            # min_pixel              = self._min_pixel,
-            # max_pixel              = self._max_pixel,
-            # adjustment_step        = self._adjustment_step,
+            width         = self.image_width,
+            height        = self.image_height,
+            sid           = sid,
+            default_theme = self._default_theme
         )
 
     def _init_routes(self, shared_session: bool):
@@ -715,6 +837,9 @@ class BaseWebViewer(ABC):
         def handle_on_mouse_wheel(data):
             session = self._get_current_session()
             
+            # 先调用内部鼠标滚轮处理逻辑
+            session._on_mouse_wheel(data['delta'])
+            # 再调用用户自定义的鼠标滚轮处理逻辑
             self.on_mouse_wheel(session, data['delta'])
 
         @self._socketio.on('update_mouse_position')
@@ -726,6 +851,9 @@ class BaseWebViewer(ABC):
             session.last_x = data['last_x']
             session.last_y = data['last_y']
 
+            # 先调用内部鼠标处理逻辑
+            session._on_mouse_move()
+            # 再调用用户自定义的鼠标处理逻辑
             self.on_mouse_move(session)
 
         # ListBox控件事件分发

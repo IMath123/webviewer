@@ -52,6 +52,36 @@ class Text(BasicControl):
         """
         super().__init__(self.TYPE, None)
         
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        if not isinstance(wrap, bool):
+            raise TypeError("wrap must be a boolean")
+        if not isinstance(show_line_numbers, bool):
+            raise TypeError("show_line_numbers must be a boolean")
+        if not isinstance(bold, bool):
+            raise TypeError("bold must be a boolean")
+        if not isinstance(italic, bool):
+            raise TypeError("italic must be a boolean")
+        if not isinstance(underline, bool):
+            raise TypeError("underline must be a boolean")
+        
+        # 验证max_lines参数
+        if max_lines is not None:
+            try:
+                max_lines = int(max_lines)
+                if max_lines <= 0:
+                    raise ValueError("max_lines must be positive")
+            except (TypeError, ValueError):
+                raise TypeError("max_lines must be a positive integer")
+        
+        # 验证align参数
+        if align is not None:
+            if not isinstance(align, str):
+                raise TypeError("align must be a string")
+            if align not in ["left", "center", "right", "justify"]:
+                raise ValueError("align must be one of: left, center, right, justify")
+        
         self.text = text
         self.wrap = wrap
         self.max_lines = max_lines

@@ -17,23 +17,34 @@ class Table(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        if not isinstance(headers, list):
+            raise TypeError("headers must be a list")
+        if not headers:
+            raise ValueError("headers cannot be empty")
+        if not all(isinstance(header, str) for header in headers):
+            raise TypeError("all headers must be strings")
+        if not isinstance(data, list):
+            raise TypeError("data must be a list")
+        if not data:
+            raise ValueError("data cannot be empty")
+        if not all(isinstance(row, list) for row in data):
+            raise TypeError("all data rows must be lists")
+        if not all(len(row) == len(headers) for row in data):
+            raise ValueError("all data rows must have the same length as headers")
+        if not isinstance(sortable, bool):
+            raise TypeError("sortable must be a boolean")
+        if not isinstance(selectable, bool):
+            raise TypeError("selectable must be a boolean")
+        
         self.text       = text
         self.headers    = headers
         self.data       = data
         self.sortable   = sortable
         self.selectable = selectable
         self.selected_rows = []
-        
-        if not isinstance(headers, list):
-            raise TypeError("headers must be a list")
-        if not isinstance(data, list):
-            raise TypeError("data must be a list")
-        if not all(isinstance(header, str) for header in headers):
-            raise TypeError("all headers must be strings")
-        if not all(isinstance(row, list) for row in data):
-            raise TypeError("all data rows must be lists")
-        if not all(len(row) == len(headers) for row in data):
-            raise ValueError("all data rows must have the same length as headers")
         
     def get_html(self) -> str:
         # 生成表头

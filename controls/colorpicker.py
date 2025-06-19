@@ -14,13 +14,16 @@ class ColorPicker(BasicControl):
 
         super().__init__(self.TYPE, callback)
         
-        self.text  = text
-        self.color = init_color
-        
+        # 参数校验
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
         if not isinstance(init_color, str):
             raise TypeError("init_color must be a string")
         if not self._is_valid_color(init_color):
             raise ValueError("init_color must be a valid color format (hex, rgb, rgba, or named color)")
+        
+        self.text  = text
+        self.color = init_color
         
     def _is_valid_color(self, color: str) -> bool:
         """检查颜色格式是否有效"""
