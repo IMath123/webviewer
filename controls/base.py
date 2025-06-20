@@ -75,8 +75,8 @@ class BasicControl:
             def wrapper(*args, **kwargs):
                 method(*args, **kwargs)  
                 content = self.get_content() 
-                content["_callback"] = True
                 if content is not None:
+                    content["_callback"] = True
                     socketio.emit("update_" + self._id, content, room=sid)
 
             return wrapper
@@ -85,8 +85,8 @@ class BasicControl:
             def wrapper(*args, **kwargs):
                 method(*args, **kwargs)  
                 content = self.get_content() 
-                content["_callback"] = False
                 if content is not None:
+                    content["_callback"] = False
                     socketio.emit("update_" + self._id, content, room=sid)
 
             return wrapper
