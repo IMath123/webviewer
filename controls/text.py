@@ -143,7 +143,7 @@ class Text(BasicControl):
             style_str = 'style="' + ' '.join(style) + '"'
         # 拼接class属性
         class_str = ' '.join(classes)
-        html = '<div class="control-group"><div class="{}" {}>{}{}</div></div>'.format(class_str, style_str, line_num_html, content_html)
+        html = '<div class="control-group"><div id="{}" class="{}" {}>{}{}</div></div>'.format(self._id, class_str, style_str, line_num_html, content_html)
         return html
     
     def get_content(self) -> Optional[Dict]:

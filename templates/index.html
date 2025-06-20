@@ -1494,7 +1494,7 @@
                             var value = data.text;
                             var button = document.getElementById(button_id);
                             if (button) button.textContent = value;
-                            socket.emit(button_func, {});
+                            if (data._callback) socket.emit(button_func, {});
                         });
                     }
                     else if (contentItem.type === 'inputbox') {
@@ -1517,7 +1517,7 @@
                         });
                         socket.on('update_' + inputbox_id, function(data) {
                             inputbox.value = data.content;
-                            socket.emit(inputbox_func, {content: inputbox.value});
+                            if (data._callback) socket.emit(inputbox_func, {content: inputbox.value});
                         });
                     }
                     else if (contentItem.type === 'slider') {
@@ -1587,7 +1587,7 @@
                             var value = data.value;
                             slider.value = value;
                             sliderValueInput.textContent = value;
-                            socket.emit(slider_func, {value: value});
+                            if (data._callback) socket.emit(slider_func, {value: value});
                         });
                     } else if (contentItem.type === 'text') {
                         var text_id = contentItem.id;
@@ -1618,6 +1618,7 @@
                         socket.on('update_' + dropdown_id, function(data) {
                             var option = data.option;
                             var dropdown = document.getElementById(dropdown_id);
+                            if (data._callback) socket.emit(dropdown_func, {option: option});
                             if (dropdown) {
                                 dropdown.value = option;
                                 if(dropdown_id === 'theme_dropdown') {
@@ -1641,7 +1642,7 @@
                             var checked = data.checked;
                             var checkbox = document.getElementById(checkbox_id);
                             if (checkbox) checkbox.checked = checked === 'true'
-                            socket.emit(checkbox_func, {checked: checkbox && checkbox.checked})
+                            if (data._callback) socket.emit(checkbox_func, {checked: checkbox && checkbox.checked})
                         });
                     } else if (contentItem.type == "image") {
                         var image_id = contentItem.id;
@@ -1658,6 +1659,7 @@
                             var image_data = data.image;
                             var image = document.getElementById(image_id);
                             if (image) image.src = 'data:image/jpeg;base64,' + image_data;
+                            if (data._callback) socket.emit(image_func, {});
                         });
 
                     } else if (contentItem.type === 'accordion') {
@@ -1704,7 +1706,7 @@
                                 arrow.classList.remove('down');
                                 arrow.classList.add('right');
                             }
-                            socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
+                            if (data._callback) socket.emit(accordion_id, {expanded: nestedControls.style.display === 'block'});
                         });
                     } else if (contentItem.type === 'tab') {
                         var tab_id = contentItem.id;
@@ -1757,6 +1759,7 @@
                         socket.on('update_' + progress_id, function(data) {
                             var value = data.value;
                             var progressContainer = document.getElementById(progress_id);
+                            if (data._callback) socket.emit(progress_func, {value: value});
                             if (progressContainer) {
                                 const progressFill = progressContainer.querySelector('.progress-fill');
                                 const progressText = progressContainer.querySelector('.progress-text');
@@ -1789,6 +1792,7 @@
                             colorpicker.value = color;
                             colorPreview.style.backgroundColor = color;
                             colorValue.textContent = color;
+                            if (data._callback) socket.emit(colorpicker_func, {color: color});
                         });
 
                     } else if (contentItem.type === 'table') {
@@ -1912,6 +1916,11 @@
                             if (data.control_count !== undefined) {
                                 container_control_count = data.control_count;
                             }
+                            if (data._callback) socket.emit(container_func, {
+                                direction: container_direction,
+                                gap: container_gap,
+                                padding: container_padding,
+                            });
                         });
                     } else if (contentItem.type === 'listbox') {
                         var listbox_id = contentItem.id;
@@ -1983,6 +1992,7 @@
                         socket.on('update_' + listbox_id, function(data) {
                             selected = data.selected || [];
                             updateSelectedUI();
+                            if (data._callback) socket.emit(listbox_id, {selected: selected});
                         });
                     }
                 })(content[i]);
