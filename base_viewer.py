@@ -564,8 +564,8 @@ class Session:
             dy = y - self._camera_last_y
             self._camera_last_x = x
             self._camera_last_y = y
-            yaw = dx * self._orbit_sensitivity
-            pitch = dy * self._orbit_sensitivity
+            pitch = dx * self._orbit_sensitivity
+            yaw = dy * self._orbit_sensitivity
             self.camera.rotate(yaw, pitch)
         
         # 处理右键平移
@@ -597,29 +597,14 @@ class Session:
         forward = R[:3, 2]
         c2w[:3, 3] += forward * step
         self.camera.set_c2w(c2w)
-        # print("intrinsics:")
-        # print(self.camera.get_intrinsics())
-        # print("c2w:")
-        # print(self.camera.get_c2w())
-        # print("w2c:")
-        # print(self.camera.get_w2c())
-        # print("camera center:")
-        # print(self.camera.camera_center)
-        # print("FoVx:")
-        # print(self.camera.FoVx)
-        # print("FoVy:")
-        # print(self.camera.FoVy)
-        # print("z_near:")
-        # print(self.camera.z_near)
-        # print("z_far:")
-        # print(self.camera.z_far)
-
+       
 
 class BaseWebViewer(ABC):
     
-    def __init__(self, width: Optional[int] = None, height: Optional[int] = None):
+    def __init__(self, width: Optional[int] = None, height: Optional[int] = None, *, title: str = "WebViewer"):
         self.image_width = width
         self.image_height = height
+        self._title = title
         
         self._app = Flask(__name__)
         self._socketio = SocketIO(self._app, cors_allowed_origins="*")
@@ -635,7 +620,7 @@ class BaseWebViewer(ABC):
         
         @self._app.route('/')
         def index():
-            return render_template('index.html')
+            return render_template('index.html', title=self._title)
         
         @self._app.route('/themes/<path:filename>')
         def themes(filename):

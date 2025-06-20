@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebViewer</title>
+    <title>{{ title }}</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -177,6 +177,12 @@
             font-size: 16px;
         }
         
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
         #sidebarControls {
             display: flex;
             justify-content: flex-end;
@@ -252,6 +258,10 @@
             color: var(--text-color);
         }
         
+        #collapseButton {
+            display: none;
+        }
+        
         #collapseButton .icon {
             transform: rotate(180deg);
         }
@@ -264,9 +274,9 @@
             background: var(--expand-button-bg);
             color: var(--text-color);
             border: 1px solid var(--expand-button-border);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 18px;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 16px;
             display: none;
             z-index: 200;
             box-shadow: var(--expand-button-shadow);
@@ -1150,11 +1160,13 @@
         <div id="sidebar">
             <div id="resizeHandle" title="拖拽调整宽度"></div>
             <div id="sidebarHeader">
-                <div id="viewerName">Viewer</div>
-                <button id="pinButton" class="active" title="固定侧边栏"><span class="icon">📌</span></button>
+                <div id="viewerName">{{ title }}</div>
+                <div class="header-buttons">
+                    <button id="pinButton" class="active" title="固定侧边栏"><span class="icon">📌</span></button>
+                    <button id="collapseButton" title="关闭侧边栏"><span class="icon">◀</span></button>
+                </div>
             </div>
             <div id="sidebarControls">
-                <button id="collapseButton" title="折叠侧边栏"><span class="icon">◀</span></button>
             </div>
             <div id="page"></div>
         </div>
