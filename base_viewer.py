@@ -504,7 +504,10 @@ class Session:
                       intrinsics: Optional[np.ndarray] = None,
                       fx: Optional[float] = None, fy: Optional[float] = None,
                       cx: Optional[float] = None, cy: Optional[float] = None, 
-                      pose: Optional[np.ndarray] = None):
+                      z_near: Optional[float] = None, z_far: Optional[float] = None,
+                      w2c: Optional[np.ndarray] = None,
+                      c2w: Optional[np.ndarray] = None,
+                      ):
         """启用相机功能，必须提供内参，外参可选"""
         try:
             width = int(width)
@@ -514,7 +517,7 @@ class Session:
         except (TypeError, ValueError):
             raise TypeError("width and height must be convertible to integers")
         
-        if intrinsics is not None:
+        if intrinsics is None:
             # 验证焦距参数 - 使用更宽松的类型判断
             try:
                 fx = float(fx)
@@ -546,19 +549,9 @@ class Session:
             cx = intrinsics[0, 2]
             cy = intrinsics[1, 2]
         
-        # 验证外参矩阵
-        if pose is not None:
-            if not isinstance(pose, np.ndarray):
-                raise TypeError("pose must be a numpy array")
-            if pose.shape != (4, 4):
-                raise ValueError("pose must be a 4x4 matrix")
-            if pose.dtype != np.float32:
-                pose = pose.astype(np.float32)
-        else:
-            pose = np.eye(4, dtype=np.float32)
-        
         from .camera import Camera
-        self.camera = Camera(fx, fy, cx, cy, width, height, pose)
+        self.camera = Camera(fx, fy, cx, cy, width, height, z_near=z_near, z_far=z_far)
+        self.camera._update_params(w2c=w2c, c2w=c2w)
 
     def _on_mouse_move(self):
         """内部鼠标移动处理逻辑"""
@@ -586,12 +579,12 @@ class Session:
             # 相机在自身坐标系 x-y 平面内平移
             step_x = -dx * self._pan_sensitivity
             step_y = dy * self._pan_sensitivity
-            pose = self.camera.get_pose(world_to_camera=False)
+            pose = self.camera.get_c2w()
             R = pose[:3, :3]
             right = R[:3, 0]  # 相机右方向
             up = -R[:3, 1]     # 相机上方向
             pose[:3, 3] += right * step_x + up * step_y
-            self.camera.set_pose(pose, world_to_camera=False)
+            self.camera.set_c2w(pose)
 
     def _on_mouse_wheel(self, delta):
         """内部鼠标滚轮处理逻辑"""
@@ -599,11 +592,27 @@ class Session:
             return
         # 鼠标滚轮控制缩放：相机沿自身坐标系 -z 方向（视线方向）平移
         step = -float(delta) * self._zoom_sensitivity
-        pose = self.camera.get_pose(world_to_camera=False)
-        R = pose[:3, :3]
+        c2w = self.camera.get_c2w()
+        R = c2w[:3, :3]
         forward = R[:3, 2]
-        pose[:3, 3] += forward * step
-        self.camera.set_pose(pose, world_to_camera=False)
+        c2w[:3, 3] += forward * step
+        self.camera.set_c2w(c2w)
+        # print("intrinsics:")
+        # print(self.camera.get_intrinsics())
+        # print("c2w:")
+        # print(self.camera.get_c2w())
+        # print("w2c:")
+        # print(self.camera.get_w2c())
+        # print("camera center:")
+        # print(self.camera.camera_center)
+        # print("FoVx:")
+        # print(self.camera.FoVx)
+        # print("FoVy:")
+        # print(self.camera.FoVy)
+        # print("z_near:")
+        # print(self.camera.z_near)
+        # print("z_far:")
+        # print(self.camera.z_far)
 
 
 class BaseWebViewer(ABC):
